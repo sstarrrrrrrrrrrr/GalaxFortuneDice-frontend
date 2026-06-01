@@ -1,0 +1,505 @@
+.page {
+  --deep: #030b35;
+  --blue: #061b6b;
+  --bright: #2f7bff;
+  --gold: #ffd23f;
+  --pink: #ff4eea;
+  --muted: rgba(255, 255, 255, 0.65);
+
+  position: relative;
+  display: block;
+  width: 100vw;
+  min-width: 1100px;
+  height: 100vh;
+  min-height: 700px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 11% 67%, rgba(124, 60, 255, 0.25), transparent 16%),
+    radial-gradient(circle at 82% 9%, rgba(29, 108, 255, 0.28), transparent 28%),
+    linear-gradient(142deg, #030b35 0%, #061b6b 54%, #071f8f 100%);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.page::before,
+.page::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.page::before {
+  opacity: 0.72;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(111, 145, 255, 0.9) 0 1px, transparent 1.6px);
+  background-position:
+    9px 4px,
+    64px 38px;
+  background-size:
+    118px 92px,
+    172px 132px;
+}
+
+.page::after {
+  background:
+    linear-gradient(90deg, rgba(6, 17, 79, 0.55), transparent 34%),
+    linear-gradient(180deg, rgba(2, 6, 34, 0.15), rgba(0, 0, 18, 0.35));
+}
+
+.sidebar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 1;
+  width: 18.6vw;
+  min-width: 216px;
+  max-width: 280px;
+  height: 100%;
+  background: transparent;
+}
+
+.logoBlock {
+  display: block;
+  height: 12%;
+  padding: 2.9vh 0 0 1.9vw;
+}
+
+.logoImage {
+  width: 82%;
+  max-width: 236px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(106, 129, 255, 0.65));
+}
+
+.sideTitle {
+  margin: 2.35vh 0 2vh;
+  padding-left: 1.85vw;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.menu {
+  display: grid;
+  gap: 2.2vh;
+  padding: 0 1.1vw 0 0.65vw;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  height: 7.2vh;
+  min-height: 56px;
+  max-height: 76px;
+  gap: 1.1vw;
+  padding: 0 1.75vw;
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.menuItem:hover,
+.menuItemActive {
+  background: linear-gradient(135deg, #7b3cff, #1d6cff);
+  border-color: rgba(142, 178, 255, 0.5);
+  box-shadow: 0 0 18px rgba(74, 101, 255, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateX(1px);
+}
+
+.trophyArt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48%;
+  overflow: hidden;
+}
+
+.trophyImage {
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 0 18px rgba(51, 112, 255, 0.65));
+}
+
+.content {
+  position: absolute;
+  inset: 0 0 0 calc(18.6vw + 18px);
+  z-index: 1;
+  padding: 0;
+}
+
+.topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 11.9%;
+}
+
+.actions {
+  position: absolute;
+  top: 26px;
+  right: 28px;
+  display: flex;
+  gap: 34px;
+}
+
+.iconButton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(4, 12, 58, 0.7);
+  border: 1px solid rgba(62, 124, 255, 0.52);
+  border-radius: 50%;
+  box-shadow: 0 0 13px rgba(39, 98, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.iconButton svg {
+  width: 52%;
+  height: 52%;
+  stroke-width: 2.2;
+}
+
+.iconButton:hover {
+  background: rgba(29, 75, 190, 0.65);
+  box-shadow: 0 0 20px rgba(91, 119, 255, 0.85);
+  transform: translateY(-1px);
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 14px;
+  font-weight: 900;
+  background: #ff1d31;
+  border-radius: 50%;
+}
+
+.updateTip {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.77);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.updateTip svg {
+  color: #67a9ff;
+}
+
+.panel {
+  position: absolute;
+  top: 11.9%;
+  right: 10px;
+  bottom: 10px;
+  left: 0;
+  width: auto;
+  margin: 0;
+  padding: 32px 24px 18px;
+  background: linear-gradient(180deg, rgba(9, 35, 116, 0.58), rgba(3, 18, 78, 0.66));
+  border: 1px solid rgba(51, 119, 255, 0.46);
+  border-radius: 14px;
+  box-shadow: 0 0 26px rgba(14, 83, 255, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(13px);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+  margin: 0 0 16px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  background: rgba(3, 15, 68, 0.72);
+  border: 1px solid rgba(37, 83, 178, 0.46);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.tab svg {
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: auto;
+}
+
+.tab:hover,
+.tabActive {
+  background: linear-gradient(135deg, #7b3cff, #1d6cff);
+  border-color: rgba(118, 161, 255, 0.82);
+  box-shadow: 0 0 22px rgba(76, 88, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.tableCard {
+  height: calc(100% - 46px - 16px - 104px - 18px);
+  overflow: hidden;
+  background: rgba(2, 22, 86, 0.26);
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 9.2% 1.42fr 0.78fr 0.78fr 0.78fr;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 28px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tableHead {
+  min-height: 58px;
+  color: #6faaff;
+  background: rgba(26, 87, 191, 0.28);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.sortedHead {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--gold);
+}
+
+.tableBody {
+  height: calc(100% - 58px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 0 18px;
+}
+
+.tableBody .tableRow {
+  height: 56px;
+  min-height: 56px;
+}
+
+.tableBody .tableRow {
+  border-radius: 7px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tableBody .tableRow:hover {
+  background: rgba(47, 123, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(88, 148, 255, 0.22);
+}
+
+.rankCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.medal {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+.medal svg {
+  position: absolute;
+}
+
+.medal span {
+  position: relative;
+  z-index: 1;
+  color: #09133f;
+  font-size: 16px;
+  font-weight: 1000;
+  transform: translateY(-1px);
+}
+
+.goldMedal {
+  color: #ffd72d;
+}
+
+.silverMedal {
+  color: #e7f0ff;
+}
+
+.bronzeMedal {
+  color: #e07b17;
+}
+
+.plainRank {
+  display: inline-block;
+  width: 44px;
+  color: #fff;
+  text-align: center;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.playerCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 16px;
+}
+
+.avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.62);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(65, 134, 255, 0.7);
+}
+
+.avatarImage {
+  object-fit: cover;
+}
+
+.playerName {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.level {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  color: #fff;
+  background: linear-gradient(135deg, #2f7bff, #1d57ff);
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(47, 123, 255, 0.58);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.goldNumber {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 196, 35, 0.4);
+}
+
+.myRankCard {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 20px;
+  display: grid;
+  grid-template-columns: 9% 7.8% 1.05fr 0.78fr 0.78fr 0.85fr 0.9fr 1.1fr;
+  align-items: center;
+  height: 104px;
+  padding: 12px 21px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(12, 48, 144, 0.7), rgba(5, 21, 88, 0.76)),
+    rgba(5, 18, 78, 0.62);
+  border: 1px solid rgba(51, 112, 238, 0.42);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(21, 88, 234, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.myRankLabel,
+.myPlayer,
+.myStat,
+.winRate,
+.nextGap {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 9px;
+}
+
+.myRankLabel span,
+.myStat span,
+.winRate span,
+.nextGap span {
+  color: #80afff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.myRankLabel strong {
+  color: #00eaff;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(0, 221, 255, 0.68);
+}
+
+.myRankCard .avatar {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 58px;
+  border-color: rgba(155, 118, 255, 0.88);
+  box-shadow: 0 0 18px rgba(128, 57, 255, 0.92);
+}
+
+.myPlayer {
+  align-content: center;
+  gap: 9px;
+}
+
+.myPlayer strong,
+.myStat strong,
+.nextGap strong {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.myStat {
+  justify-items: center;
+}
+
+.winRate {
+  justify-items: center;
+}
+
+.winRate strong {
+  color: var(--pink);
+  font-size: 23px;
+  font-weight: 1000;
+  text-shadow: 0 0 13px rgba(255, 78, 234, 0.64);
+}
+
+.nextGap strong {
+  font-size: 16px;
+}
