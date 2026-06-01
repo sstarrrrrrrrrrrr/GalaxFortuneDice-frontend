@@ -1,126 +1,66 @@
-# 银河大乐骰 - 登录页面
+# 银河大乐骰
 
-## 项目说明
-
-这是一个使用 Next.js 14 + TailwindCSS + Framer Motion 实现的登录页面，高度还原了 Figma 设计稿。
+银河、科幻、霓虹风格的多人骰子对战前端项目。
 
 ## 技术栈
 
-- **React 18**
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **TailwindCSS**
-- **Framer Motion**
-- **CSS Modules**
+- Next.js 16.2.6 App Router
+- React 19 + TypeScript
+- Tailwind CSS
+- Framer Motion
+- Lucide React
+- Axios
+- Zustand
 
-## 文件结构
+## 主要页面
 
-```
-app/(auth)/login/
-├── page.tsx          # 主登录页面组件
-└── login.module.css  # CSS 模块样式文件
-```
+- `/login`：账号登录、注册、游客登录
+- `/lobby`：大厅、创建房间、加入房间
+- `/room/[roomId]`：房间等待页
+- `/game/[matchId]/vs`：VS 过场页
+- `/game/[matchId]`：对局页
+- `/ranking/overall`：排行榜
+- `/profile/me`：个人中心
+- `/spectator/[matchId]`：观战页
 
-## 功能特性
+## 本地运行
 
-### 1. Tab 切换
-- 账号登录 / 游客登录
-- 平滑的切换动画
-- 活跃指示器
-- 具有强交互效果
-
-### 2. 表单输入
-- 手机号输入框
-- 密码输入框（带密码显示切换）
-- 验证码输入框（带刷新功能）
-- Focus 状态样式
-
-### 3. 动画效果
-- 页面渐入动画
-- Logo 呼吸发光效果
-- 卡片入场动画
-- Tab 切换动画
-- 按钮悬停效果
-- 输入框聚焦动画
-
-### 4. 视觉效果
-- 星空背景
-- Glassmorphism 卡片
-- 紫色边框发光
-- 黄色渐变按钮
-- 毛玻璃效果
-
-## 设计规范
-
-### 颜色系统
-- 主色调：紫色 (#6B46C1)
-- 背景色：深紫色渐变
-- 按钮色：黄色渐变 (#FFD700 → #FFA500)
-- 文字色：白色为主
-
-### 间距系统
-- 卡片圆角：32px
-- 输入框高度：72px
-- 内边距：40px
-- 元素间距：32px
-
-### 字体层级
-- 标题：32px / Bold
-- 正文：18px / Medium
-- 辅助文字：15px / Regular
-
-## 使用方法
-
-1. 启动开发服务器：
 ```bash
+npm install
 npm run dev
 ```
 
-2. 访问登录页面：
-```
+默认访问：
+
+```text
 http://localhost:3000/login
 ```
 
-## 依赖项
+开发环境可临时绕过登录进入大厅：
 
-```json
-{
-  "framer-motion": "^10.16.4"
-}
+```text
+http://localhost:3000/lobby?dev=true
 ```
 
-## 注意事项
+## 常用命令
 
-1. 所有图片资源放在 `public/images/login/` 目录下
-2. CSS Module 的样式命名使用 camelCase
-3. 动画效果使用 Framer Motion 实现
-4. 保持与 Figma 设计稿的一致性
-
-## 开发指南
-
-### 添加新动画
-```tsx
-<motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ duration: 0.5 }}
->
-  <!-- 内容 -->
-</motion.div>
+```bash
+npm run lint
+npm run build
+npm run start
 ```
 
-### 添加新样式
-```css
-/* login.module.css */
-.new-style {
-  /* 样式定义 */
-}
-```
+## 游戏规则
 
-### 在组件中使用
-```tsx
-import styles from './login.module.css'
+- 每局 13 轮。
+- 每回合最多投掷 3 次。
+- 每次投掷 5 颗骰子。
+- 玩家可以锁定骰子。
+- 正式骰子结果、正式分数和最终胜负由后端决定。
 
-// ...
-className={styles.new-style}
-```
+## 项目约定
+
+- 接口请求放在 `services/`。
+- WebSocket 封装放在 `websocket/`。
+- 本地图片优先使用 `next/image`。
+- 大厅、房间、VS、对局之间需要保持模式参数传递完整。
