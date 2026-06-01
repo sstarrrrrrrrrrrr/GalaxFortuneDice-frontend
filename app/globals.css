@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@import "tailwindcss";
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #08031a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -10,17 +10,83 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* 登录页自定义紫色 */
+  --color-lavender: #c4b5fd;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@font-face {
+  font-family: 'GameTitle';
+  src: url('/fonts/ZCOOLKuaiLe-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.login-logo-float {
+  animation: login-logo-float 4s ease-in-out infinite;
+  transform: translateY(0);
+  will-change: transform;
+}
+
+@keyframes login-logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes guest-dice-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes guest-dice-halo {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.lobby-mode-float {
+  animation: lobby-mode-float 4.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes lobby-mode-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
