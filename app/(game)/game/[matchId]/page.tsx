@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ChevronRight,
@@ -18,7 +18,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { createMatchSnapshotFromState, getMatchState, readMatchSnapshot, rollDice, type MatchInfoPlayer, type MatchSnapshot } from '@/services/match'
+import { createMatchSnapshotFromState, getFinalScores, getMatchState, readMatchSnapshot, rollDice, selectScore, storeMatchResult, type MatchEndedResult, type MatchInfoPlayer, type MatchSnapshot, type SelectableScore } from '@/services/match'
 import { normalizeAvatarSrc } from '@/utils/avatar'
 import { connectMatchChannel } from '@/websocket/match'
 
@@ -54,9 +54,42 @@ type DiceRolledMessage = {
   user_id?: number
   dice_values?: number[]
   lock_mask?: number[]
+  data?: unknown
+  payload?: unknown
   remain_throws?: number
   remain_throw_count?: number
-  selectable_scores?: string[]
+  selectable_scores?: SelectableScore[]
+}
+
+type ScoreSelectedMessage = {
+  type?: string
+  user_id?: number
+  score_type?: string
+  score_key?: string
+  round_score?: number
+  total_score?: number
+  data?: unknown
+  payload?: unknown
+}
+
+type GameEndedMessage = {
+  type?: string
+  results?: MatchEndedResult[]
+  player_scores?: MatchEndedResult[]
+  winner?: string | number
+  winner_user_id?: string | number
+  data?: unknown
+  payload?: unknown
+}
+
+interface ScorePreview {
+  key: string
+  score?: number
+}
+
+interface SelectedScore {
+  roundScore: number
+  totalScore: number
 }
 
 const TURN_SECONDS = 15
@@ -131,8 +164,263 @@ function readInitialMatchSnapshot(matchId: string) {
   return readMatchSnapshot(matchId)
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
+}
+
+function readNumberArray(records: Array<Record<string, unknown> | null>, keys: string[]) {
+  for (const record of records) {
+    if (!record) continue
+
+    for (const key of keys) {
+      const value = record[key]
+      if (Array.isArray(value)) {
+        const numbers = value
+          .map((item) => (typeof item === 'number' ? item : typeof item === 'boolean' ? Number(item) : Number(item)))
+          .filter((item) => Number.isFinite(item))
+
+        if (numbers.length > 0) return numbers
+      }
+    }
+  }
+
+  return undefined
+}
+
+function readSelectableScoreArray(records: Array<Record<string, unknown> | null>, keys: string[]) {
+  for (const record of records) {
+    if (!record) continue
+
+    for (const key of keys) {
+      const value = record[key]
+      if (Array.isArray(value)) {
+        return value as SelectableScore[]
+      }
+    }
+  }
+
+  return undefined
+}
+
+function readResultArray(records: Array<Record<string, unknown> | null>, keys: string[]) {
+  for (const record of records) {
+    if (!record) continue
+
+    for (const key of keys) {
+      const value = record[key]
+      if (Array.isArray(value)) {
+        return value as MatchEndedResult[]
+      }
+    }
+  }
+
+  return []
+}
+
+function readNumberValue(records: Array<Record<string, unknown> | null>, keys: string[]) {
+  for (const record of records) {
+    if (!record) continue
+
+    for (const key of keys) {
+      const value = record[key]
+      const numberValue = typeof value === 'number' ? value : Number(value)
+      if (Number.isFinite(numberValue)) return numberValue
+    }
+  }
+
+  return undefined
+}
+
+function readStringValue(records: Array<Record<string, unknown> | null>, keys: string[]) {
+  for (const record of records) {
+    if (!record) continue
+
+    for (const key of keys) {
+      const value = record[key]
+      if (typeof value === 'string' && value.trim()) return value
+    }
+  }
+
+  return undefined
+}
+
+function readDiceRolledPayload(message: DiceRolledMessage) {
+  const data = asRecord(message.data)
+  const payload = asRecord(message.payload)
+  const dataPayload = asRecord(data?.payload)
+  const records = [message as Record<string, unknown>, data, payload, dataPayload]
+
+  return {
+    diceValues: readNumberArray(records, ['dice_values', 'diceValues']),
+    lockMask: readNumberArray(records, ['lock_mask', 'lockMask', 'locked_dice', 'lockedDice']),
+    remainThrowCount: readNumberValue(records, ['remain_throws', 'remainThrows', 'remain_throw_count', 'remainThrowCount']),
+    selectableScores: readSelectableScoreArray(records, ['selectable_scores', 'selectableScores']),
+  }
+}
+
+function readScoreSelectedPayload(message: ScoreSelectedMessage) {
+  const data = asRecord(message.data)
+  const payload = asRecord(message.payload)
+  const dataPayload = asRecord(data?.payload)
+  const records = [message as Record<string, unknown>, data, payload, dataPayload]
+
+  return {
+    userId: readNumberValue(records, ['user_id', 'userId']),
+    scoreKey: readStringValue(records, ['score_type', 'scoreType', 'score_key', 'scoreKey', 'category', 'type']),
+    roundScore: readNumberValue(records, ['round_score', 'roundScore', 'score', 'score_value', 'scoreValue']),
+    totalScore: readNumberValue(records, ['total_score', 'totalScore']),
+  }
+}
+
+function readGameEndedPayload(message: GameEndedMessage) {
+  const data = asRecord(message.data)
+  const payload = asRecord(message.payload)
+  const dataPayload = asRecord(data?.payload)
+  const records = [message as Record<string, unknown>, data, payload, dataPayload]
+
+  return {
+    results: readResultArray(records, ['results', 'player_scores', 'playerScores']),
+    winner: readNumberValue(records, ['winner', 'winner_user_id', 'winnerUserId']) ?? readStringValue(records, ['winner', 'winner_user_id', 'winnerUserId']),
+  }
+}
+
+function isGameEndedEvent(rawType?: string) {
+  return rawType === 'game_ended'
+}
+
+function isScoreSelectedEvent(rawType?: string) {
+  return [
+    'score_selected',
+    'select_score',
+    'score_chosen',
+    'score_updated',
+    'score_scored',
+  ].includes(rawType ?? '')
+}
+
+function debugSelectableScores(selectableScores: unknown) {
+  if (process.env.NODE_ENV !== 'development') return
+
+  const keys = Array.isArray(selectableScores)
+    ? selectableScores.map((item) => {
+        if (typeof item === 'string') return item
+        if (item && typeof item === 'object') {
+          const record = item as Record<string, unknown>
+          return record.key ?? record.score_key ?? record.category ?? record.name ?? record.type
+        }
+
+        return item
+      })
+    : selectableScores && typeof selectableScores === 'object'
+      ? Object.keys(selectableScores)
+      : []
+
+  console.log('[match selectable_scores]', {
+    raw: selectableScores,
+    valueType: Array.isArray(selectableScores) ? 'array' : typeof selectableScores,
+    keys,
+  })
+}
+
 function normalizeLockMask(mask?: Array<number | boolean>) {
   return Array.from({ length: DICE_COUNT }, (_, index) => (mask?.[index] ? 1 : 0))
+}
+
+function normalizeScoreKey(key: string) {
+  const normalizedKey = key.trim()
+  const keyMap: Record<string, string> = {
+    ones: 'ones',
+    twos: 'twos',
+    threes: 'threes',
+    fours: 'fours',
+    fives: 'fives',
+    sixes: 'sixes',
+    three_of_a_kind: 'threeKind',
+    threeKind: 'threeKind',
+    four_of_a_kind: 'fourKind',
+    fourKind: 'fourKind',
+    full_house: 'fullHouse',
+    fullHouse: 'fullHouse',
+    small_straight: 'smallStr',
+    smallStraight: 'smallStr',
+    smallStr: 'smallStr',
+    large_straight: 'largeStr',
+    largeStraight: 'largeStr',
+    largeStr: 'largeStr',
+    chance: 'chance',
+    yahtzee: 'yahtzee',
+  }
+
+  return keyMap[normalizedKey] ?? normalizedKey
+}
+
+function toBackendScoreType(key: string) {
+  const scoreTypeMap: Record<string, string> = {
+    threeKind: 'three_of_a_kind',
+    fourKind: 'four_of_a_kind',
+    fullHouse: 'full_house',
+    smallStr: 'small_straight',
+    largeStr: 'large_straight',
+  }
+
+  return scoreTypeMap[key] ?? key
+}
+
+function readSelectableScoreKey(score: SelectableScore) {
+  if (typeof score === 'string') return score
+
+  return (
+    score.key ??
+    score.score_key ??
+    score.category ??
+    score.name ??
+    score.type
+  )
+}
+
+function readSelectableScoreValue(score: SelectableScore) {
+  if (typeof score === 'string') return undefined
+
+  const value = score.score ?? score.value ?? score.points ?? score.score_value
+  const numberValue = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(numberValue) ? numberValue : undefined
+}
+
+function buildSelectableScoreMap(selectableScores: SelectableScore[]) {
+  return selectableScores.reduce<Record<string, ScorePreview>>((scoreMap, score) => {
+    const key = readSelectableScoreKey(score)
+    if (!key) return scoreMap
+
+    const normalizedKey = normalizeScoreKey(key)
+
+    return {
+      ...scoreMap,
+      [normalizedKey]: {
+        key: normalizedKey,
+        score: readSelectableScoreValue(score),
+      },
+    }
+  }, {})
+}
+
+function findHighestSelectableScoreKey(
+  selectableScores: SelectableScore[],
+  selectedScoreMap: Record<string, SelectedScore> = {},
+) {
+  return selectableScores.reduce<{ key: string; score: number } | null>((highestScore, score) => {
+    const key = readSelectableScoreKey(score)
+    const scoreValue = readSelectableScoreValue(score)
+    if (!key || scoreValue === undefined) return highestScore
+
+    const normalizedKey = normalizeScoreKey(key)
+    if (selectedScoreMap[normalizedKey]) return highestScore
+
+    if (!highestScore || scoreValue > highestScore.score) {
+      return { key: normalizedKey, score: scoreValue }
+    }
+
+    return highestScore
+  }, null)?.key
 }
 
 const chatMessages = [
@@ -175,6 +463,7 @@ const scoreSections = [
 ]
 
 export default function GamePage() {
+  const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
   const currentUser = useCurrentUser()
@@ -191,9 +480,26 @@ export default function GamePage() {
   const [rollsLeft, setRollsLeft] = useState(3)
   const [isRolling, setIsRolling] = useState(false)
   const [rollingFrame, setRollingFrame] = useState(0)
-  const [timeLeft, setTimeLeft] = useState(TURN_SECONDS)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [selectedScores, setSelectedScores] = useState<Record<number, Record<string, SelectedScore>>>({})
+  const [totalScores, setTotalScores] = useState<Record<number, number>>({})
+  const [selectingScoreKey, setSelectingScoreKey] = useState<string | null>(null)
+  const [hasRolledThisTurn, setHasRolledThisTurn] = useState(false)
+  const [autoRollHintSeconds, setAutoRollHintSeconds] = useState(TURN_SECONDS)
+  const [isGameEnded, setIsGameEnded] = useState(false)
   const rollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const remoteRollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoRollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoRollHintTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const gameEndedRef = useRef(false)
+  const isRollingRef = useRef(isRolling)
+  const selectedScoresRef = useRef(selectedScores)
+  const selectingScoreKeyRef = useRef(selectingScoreKey)
+  const matchSnapshotRef = useRef(matchSnapshot)
+  const hasSubmittedScoreThisTurnRef = useRef(false)
+  const hasAutoRolledOpeningRef = useRef(false)
+  const openingTurnUserIdRef = useRef<number | undefined>(undefined)
   const displayPlayers = useMemo(
     () => {
       if (matchSnapshot?.players.length) {
@@ -215,14 +521,191 @@ export default function GamePage() {
   const currentPlayer = displayPlayers.find((player) => player.isCurrentTurn) ?? displayPlayers[0]
   const currentUserId = hydratedUser?.id
   const isCurrentUserTurn = Boolean(currentUserId && currentPlayer?.id === currentUserId)
+  const currentUserIdRef = useRef(currentUserId)
+  const hasRolledThisTurnRef = useRef(hasRolledThisTurn)
 
   const visiblePlayers = useMemo(() => displayPlayers.slice(0, mode.maxPlayers), [displayPlayers, mode.maxPlayers])
+
+  const refreshMatchState = useCallback(
+    async ({ syncLockedDice = true }: { syncLockedDice?: boolean } = {}) => {
+      if (gameEndedRef.current) return
+
+      const matchState = await getMatchState(matchId)
+      debugSelectableScores(matchState.selectable_scores)
+
+      setMatchSnapshot((currentSnapshot) =>
+        createMatchSnapshotFromState(matchState, currentSnapshot?.players ?? []),
+      )
+      setRollsLeft(matchState.remain_throw_count)
+      const nextHasRolledThisTurn = matchState.remain_throw_count < 3
+      hasRolledThisTurnRef.current = nextHasRolledThisTurn
+      setHasRolledThisTurn(nextHasRolledThisTurn)
+      if (!isRollingRef.current) {
+        setDice((currentDice) =>
+          currentDice.map((die, index) => ({
+            ...die,
+            value: matchState.dice_values[index] ?? die.value,
+            held: syncLockedDice ? Boolean(matchState.locked_dice[index]) : die.held,
+          })),
+        )
+      }
+
+      if (syncLockedDice && !isRollingRef.current) {
+        setLockMask(normalizeLockMask(matchState.locked_dice))
+      }
+      if (!isRollingRef.current) {
+        setRollingDiceMask(normalizeLockMask())
+      }
+
+      return matchState
+    },
+    [matchId],
+  )
+
+  const refreshMatchStateAfterRoll = useCallback(
+    () => {
+      if (gameEndedRef.current) return
+
+      void refreshMatchState().catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[match state error]', error)
+        }
+      })
+    },
+    [refreshMatchState],
+  )
+
+  const submitScoreSelection = useCallback(
+    async (scoreKey: string) => {
+      if (isGameEnded || !isCurrentUserTurn || !currentUserId || selectingScoreKeyRef.current || hasSubmittedScoreThisTurnRef.current) return
+
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+      setTimeLeft(0)
+      selectingScoreKeyRef.current = scoreKey
+      setSelectingScoreKey(scoreKey)
+
+      try {
+        const selectResult = await selectScore({
+          match_id: matchId,
+          user_id: currentUserId,
+          score_type: toBackendScoreType(scoreKey),
+        })
+
+        setSelectedScores((currentScores) => {
+          const nextScores = {
+            ...currentScores,
+            [currentUserId]: {
+              ...currentScores[currentUserId],
+              [scoreKey]: {
+                roundScore: selectResult.round_score,
+                totalScore: selectResult.total_score,
+              },
+            },
+          }
+          selectedScoresRef.current = nextScores
+          return nextScores
+        })
+        hasSubmittedScoreThisTurnRef.current = true
+        setTotalScores((currentScores) => ({
+          ...currentScores,
+          [currentUserId]: selectResult.total_score,
+        }))
+        await refreshMatchState()
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[select score error]', error)
+        }
+      } finally {
+        selectingScoreKeyRef.current = null
+        setSelectingScoreKey(null)
+      }
+    },
+    [currentUserId, isCurrentUserTurn, isGameEnded, matchId, refreshMatchState],
+  )
+
+  const autoSelectHighestScore = useCallback(
+    async (selectableScores?: SelectableScore[]) => {
+      if (hasSubmittedScoreThisTurnRef.current || !currentUserId) return
+
+      let nextSelectableScores = selectableScores
+
+      if (!nextSelectableScores?.length) {
+        const latestMatchState = await refreshMatchState()
+        nextSelectableScores = latestMatchState?.selectable_scores
+      }
+
+      const autoScoreKey = findHighestSelectableScoreKey(
+        nextSelectableScores ?? [],
+        selectedScoresRef.current[currentUserId],
+      )
+
+      if (autoScoreKey) {
+        await submitScoreSelection(autoScoreKey)
+      }
+    },
+    [currentUserId, refreshMatchState, submitScoreSelection],
+  )
 
   useEffect(() => {
     const mountedTimer = window.setTimeout(() => setHasMounted(true), 0)
 
     return () => window.clearTimeout(mountedTimer)
   }, [])
+
+  useEffect(() => {
+    selectedScoresRef.current = selectedScores
+  }, [selectedScores])
+
+  useEffect(() => {
+    isRollingRef.current = isRolling
+  }, [isRolling])
+
+  useEffect(() => {
+    currentUserIdRef.current = currentUserId
+  }, [currentUserId])
+
+  useEffect(() => {
+    hasRolledThisTurnRef.current = hasRolledThisTurn
+  }, [hasRolledThisTurn])
+
+  useEffect(() => {
+    matchSnapshotRef.current = matchSnapshot
+
+    if (!openingTurnUserIdRef.current && matchSnapshot?.currentTurnUserId) {
+      openingTurnUserIdRef.current = matchSnapshot.currentTurnUserId
+    }
+  }, [matchSnapshot])
+
+  useEffect(() => {
+    hasSubmittedScoreThisTurnRef.current = false
+    hasRolledThisTurnRef.current = false
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    if (autoRollTimerRef.current) {
+      clearTimeout(autoRollTimerRef.current)
+      autoRollTimerRef.current = null
+    }
+    if (autoRollHintTimerRef.current) {
+      clearInterval(autoRollHintTimerRef.current)
+      autoRollHintTimerRef.current = null
+    }
+    const resetRolledTimer = window.setTimeout(() => {
+      setTimeLeft(0)
+      setAutoRollHintSeconds(TURN_SECONDS)
+      setHasRolledThisTurn(false)
+    }, 0)
+
+    return () => window.clearTimeout(resetRolledTimer)
+  }, [matchSnapshot?.currentTurnUserId])
+
+  useEffect(() => {
+    selectingScoreKeyRef.current = selectingScoreKey
+  }, [selectingScoreKey])
 
   useEffect(() => {
     if (!hasMounted || !matchId) return
@@ -236,23 +719,41 @@ export default function GamePage() {
 
   const toggleHold = useCallback(
     (id: number) => {
-      if (!isCurrentUserTurn || isRolling) return
+      if (isGameEnded || !isCurrentUserTurn || isRolling) return
       setLockMask((currentMask) => normalizeLockMask(currentMask).map((locked, index) => (index === id ? (locked ? 0 : 1) : locked)))
       setDice((prev) => prev.map((die) => (die.id === id ? { ...die, held: !die.held } : die)))
+      void refreshMatchState({ syncLockedDice: false }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[match state error]', error)
+        }
+      })
     },
-    [isCurrentUserTurn, isRolling],
+    [isCurrentUserTurn, isGameEnded, isRolling, refreshMatchState],
   )
 
   const handleRoll = useCallback(async () => {
-    if (!isCurrentUserTurn || !currentUserId || isRolling || rollsLeft <= 0) return
+    if (isGameEnded || !isCurrentUserTurn || !currentUserId || isRollingRef.current || rollsLeft <= 0) return
 
     setRollingFrame(0)
     const currentLockMask = normalizeLockMask(lockMask)
     setRollingDiceMask(currentLockMask.map((locked) => (locked ? 0 : 1)))
+    isRollingRef.current = true
     setIsRolling(true)
-    setTimeLeft(TURN_SECONDS)
+    setTimeLeft(0)
 
     if (rollTimerRef.current) clearTimeout(rollTimerRef.current)
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    if (autoRollTimerRef.current) {
+      clearTimeout(autoRollTimerRef.current)
+      autoRollTimerRef.current = null
+    }
+    if (autoRollHintTimerRef.current) {
+      clearInterval(autoRollHintTimerRef.current)
+      autoRollHintTimerRef.current = null
+    }
 
     try {
       const rollResult = await rollDice({
@@ -284,18 +785,30 @@ export default function GamePage() {
               }
             : currentSnapshot,
         )
+        isRollingRef.current = false
+        hasRolledThisTurnRef.current = true
+        setHasRolledThisTurn(true)
         setIsRolling(false)
         setTimeLeft(TURN_SECONDS)
+        refreshMatchStateAfterRoll()
       }, ROLL_DURATION)
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('[roll dice error]', error)
       }
       setRollingDiceMask(normalizeLockMask())
+      isRollingRef.current = false
       setIsRolling(false)
-      setTimeLeft(TURN_SECONDS)
+      setTimeLeft(0)
     }
-  }, [currentUserId, isCurrentUserTurn, isRolling, lockMask, matchId, rollsLeft])
+  }, [currentUserId, isCurrentUserTurn, isGameEnded, lockMask, matchId, refreshMatchStateAfterRoll, rollsLeft])
+
+  const handleSelectScore = useCallback(
+    async (scoreKey: string) => {
+      await submitScoreSelection(scoreKey)
+    },
+    [submitScoreSelection],
+  )
 
   useEffect(() => {
     if (!hasMounted || !matchId) return
@@ -305,11 +818,71 @@ export default function GamePage() {
       onMessage: ({ rawType, message }) => {
         if (!message) return
 
+        if (isGameEndedEvent(rawType)) {
+          if (gameEndedRef.current) return
+
+          const gameEndedPayload = readGameEndedPayload(message as GameEndedMessage)
+          gameEndedRef.current = true
+          setIsGameEnded(true)
+
+          if (rollTimerRef.current) clearTimeout(rollTimerRef.current)
+          if (remoteRollTimerRef.current) clearTimeout(remoteRollTimerRef.current)
+          if (autoRollTimerRef.current) {
+            clearTimeout(autoRollTimerRef.current)
+            autoRollTimerRef.current = null
+          }
+          if (autoRollHintTimerRef.current) {
+            clearInterval(autoRollHintTimerRef.current)
+            autoRollHintTimerRef.current = null
+          }
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current)
+            countdownTimerRef.current = null
+          }
+          isRollingRef.current = false
+          setIsRolling(false)
+          setTimeLeft(0)
+
+          void getFinalScores(matchId)
+            .then((finalScores) => {
+              console.log('[match final_score data]', finalScores)
+              storeMatchResult({
+                matchId,
+                results: finalScores,
+                winner: gameEndedPayload.winner,
+                endedAt: Date.now(),
+              })
+              router.replace(`/game/${matchId}/result?mode=${modeKey}`)
+            })
+            .catch((error) => {
+              if (process.env.NODE_ENV === 'development') {
+                console.error('[match final_score error]', error)
+              }
+
+              storeMatchResult({
+                matchId,
+                results: gameEndedPayload.results,
+                winner: gameEndedPayload.winner,
+                endedAt: Date.now(),
+              })
+              router.replace(`/game/${matchId}/result?mode=${modeKey}`)
+            })
+          return
+        }
+
+        if (gameEndedRef.current) return
+
         if (rawType === 'dice_rolled') {
           const diceRolledMessage = message as DiceRolledMessage
-          const nextDiceValues = diceRolledMessage.dice_values
-          const nextLockMask = normalizeLockMask(diceRolledMessage.lock_mask)
-          const nextRemainThrowCount = diceRolledMessage.remain_throws ?? diceRolledMessage.remain_throw_count
+          const diceRolledPayload = readDiceRolledPayload(diceRolledMessage)
+          const nextDiceValues = diceRolledPayload.diceValues
+          const nextLockMask = normalizeLockMask(diceRolledPayload.lockMask)
+          const nextRemainThrowCount = diceRolledPayload.remainThrowCount
+          const rolledUserId = diceRolledMessage.user_id
+
+          if (isRollingRef.current && rolledUserId && rolledUserId === currentUserIdRef.current) {
+            return
+          }
 
           if (remoteRollTimerRef.current) clearTimeout(remoteRollTimerRef.current)
           setRollingFrame(0)
@@ -320,39 +893,103 @@ export default function GamePage() {
               held: Boolean(nextLockMask[index]),
             })),
           )
-          setRollingDiceMask(nextLockMask.map((locked) => (locked ? 0 : 1)))
+          const nextRollingDiceMask = nextLockMask.map((locked) => (locked ? 0 : 1))
+          setRollingDiceMask(nextRollingDiceMask)
+          isRollingRef.current = true
           setIsRolling(true)
+          setTimeLeft(0)
 
           if (nextDiceValues?.length) {
             remoteRollTimerRef.current = setTimeout(() => {
               setDice((currentDice) =>
                 currentDice.map((die, index) => ({
                   ...die,
-                  value: nextDiceValues[index] ?? die.value,
+                  value: nextRollingDiceMask[index] === 1 ? nextDiceValues[index] ?? die.value : die.value,
                   held: Boolean(nextLockMask[index]),
                 })),
               )
               setRollingDiceMask(normalizeLockMask())
+              isRollingRef.current = false
+              hasRolledThisTurnRef.current = true
+              setHasRolledThisTurn(true)
               setIsRolling(false)
+              if (nextRemainThrowCount !== undefined) {
+                setRollsLeft(nextRemainThrowCount)
+              }
+              setMatchSnapshot((currentSnapshot) =>
+                currentSnapshot
+                  ? {
+                      ...currentSnapshot,
+                      diceValues: nextDiceValues,
+                      lockedDice: nextLockMask.map(Boolean),
+                      remainThrowCount: nextRemainThrowCount ?? currentSnapshot.remainThrowCount,
+                      selectableScores: diceRolledPayload.selectableScores ?? currentSnapshot.selectableScores,
+                    }
+                  : currentSnapshot,
+              )
+              refreshMatchStateAfterRoll()
             }, ROLL_DURATION)
           } else {
             setRollingDiceMask(normalizeLockMask())
+            isRollingRef.current = false
+            hasRolledThisTurnRef.current = true
+            setHasRolledThisTurn(true)
             setIsRolling(false)
+            refreshMatchStateAfterRoll()
+            if (nextRemainThrowCount !== undefined) {
+              setRollsLeft(nextRemainThrowCount)
+            }
+            setMatchSnapshot((currentSnapshot) =>
+              currentSnapshot
+                ? {
+                    ...currentSnapshot,
+                    diceValues: nextDiceValues ?? currentSnapshot.diceValues,
+                    lockedDice: nextLockMask.map(Boolean),
+                    remainThrowCount: nextRemainThrowCount ?? currentSnapshot.remainThrowCount,
+                    selectableScores: diceRolledPayload.selectableScores ?? currentSnapshot.selectableScores,
+                  }
+                : currentSnapshot,
+            )
           }
-          if (nextRemainThrowCount !== undefined) {
-            setRollsLeft(nextRemainThrowCount)
+          return
+        }
+
+        if (isScoreSelectedEvent(rawType)) {
+          const scoreSelectedPayload = readScoreSelectedPayload(message as ScoreSelectedMessage)
+          const selectedUserId = scoreSelectedPayload.userId
+          const selectedScoreKey = scoreSelectedPayload.scoreKey ? normalizeScoreKey(scoreSelectedPayload.scoreKey) : undefined
+          const selectedRoundScore = scoreSelectedPayload.roundScore
+          const selectedTotalScore = scoreSelectedPayload.totalScore
+
+          if (selectedUserId && selectedScoreKey && selectedRoundScore !== undefined) {
+            setSelectedScores((currentScores) => {
+              const nextScores = {
+                ...currentScores,
+                [selectedUserId]: {
+                  ...currentScores[selectedUserId],
+                  [selectedScoreKey]: {
+                    roundScore: selectedRoundScore,
+                    totalScore: selectedTotalScore ?? currentScores[selectedUserId]?.[selectedScoreKey]?.totalScore ?? 0,
+                  },
+                },
+              }
+              selectedScoresRef.current = nextScores
+              return nextScores
+            })
           }
-          setMatchSnapshot((currentSnapshot) =>
-            currentSnapshot
-              ? {
-                  ...currentSnapshot,
-                  diceValues: nextDiceValues ?? currentSnapshot.diceValues,
-                  lockedDice: nextLockMask.map(Boolean),
-                  remainThrowCount: nextRemainThrowCount ?? currentSnapshot.remainThrowCount,
-                  selectableScores: diceRolledMessage.selectable_scores ?? currentSnapshot.selectableScores,
-                }
-              : currentSnapshot,
-          )
+
+          if (selectedUserId && selectedTotalScore !== undefined) {
+            setTotalScores((currentScores) => ({
+              ...currentScores,
+              [selectedUserId]: selectedTotalScore,
+            }))
+          }
+
+          void refreshMatchState().catch((error) => {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[match state error]', error)
+            }
+          })
           return
         }
 
@@ -374,7 +1011,7 @@ export default function GamePage() {
         }))
       },
     })
-  }, [hasMounted, matchId])
+  }, [hasMounted, matchId, modeKey, refreshMatchState, refreshMatchStateAfterRoll, router])
 
   useEffect(() => {
     if (!hasMounted || !matchId) return
@@ -383,22 +1020,8 @@ export default function GamePage() {
 
     async function loadMatchState() {
       try {
-        const matchState = await getMatchState(matchId)
+        await refreshMatchState()
         if (disposed) return
-
-        setMatchSnapshot((currentSnapshot) =>
-          createMatchSnapshotFromState(matchState, currentSnapshot?.players ?? []),
-        )
-        setRollsLeft(matchState.remain_throw_count)
-        setDice((currentDice) =>
-          currentDice.map((die, index) => ({
-            ...die,
-            value: matchState.dice_values[index] ?? die.value,
-            held: matchState.locked_dice[index] ?? die.held,
-          })),
-        )
-        setLockMask(normalizeLockMask(matchState.locked_dice))
-        setRollingDiceMask(normalizeLockMask())
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error('[match state error]', error)
@@ -411,25 +1034,117 @@ export default function GamePage() {
     return () => {
       disposed = true
     }
-  }, [hasMounted, matchId])
+  }, [hasMounted, matchId, refreshMatchState])
 
   useEffect(() => {
-    if (!isCurrentUserTurn || isRolling || rollsLeft <= 0) return
+    if (
+      !matchSnapshot ||
+      isGameEnded ||
+      !isCurrentUserTurn ||
+      !currentUserId ||
+      isRolling ||
+      matchSnapshot.currentTurnUserId !== openingTurnUserIdRef.current ||
+      matchSnapshot.currentRound !== 1 ||
+      rollsLeft !== 3
+    ) {
+      return
+    }
 
-    const countdownTimer = window.setInterval(() => {
+    if (hasAutoRolledOpeningRef.current) return
+
+    hasAutoRolledOpeningRef.current = true
+    void handleRoll()
+  }, [currentUserId, handleRoll, isCurrentUserTurn, isGameEnded, isRolling, matchId, matchSnapshot, rollsLeft])
+
+  useEffect(() => {
+    if (
+      isGameEnded ||
+      !matchSnapshot?.currentTurnUserId ||
+      hasRolledThisTurn ||
+      isRolling ||
+      rollsLeft <= 0
+    ) {
+      return
+    }
+
+    if (autoRollTimerRef.current) {
+      clearTimeout(autoRollTimerRef.current)
+    }
+    if (autoRollHintTimerRef.current) {
+      clearInterval(autoRollHintTimerRef.current)
+    }
+
+    setAutoRollHintSeconds(TURN_SECONDS)
+    autoRollHintTimerRef.current = setInterval(() => {
+      setAutoRollHintSeconds((current) => Math.max(current - 1, 0))
+    }, 1000)
+
+    autoRollTimerRef.current = setTimeout(() => {
+      autoRollTimerRef.current = null
+      if (autoRollHintTimerRef.current) {
+        clearInterval(autoRollHintTimerRef.current)
+        autoRollHintTimerRef.current = null
+      }
+      if (isCurrentUserTurn && !hasRolledThisTurnRef.current && !isRollingRef.current && rollsLeft > 0) {
+        void handleRoll()
+      }
+    }, TURN_SECONDS * 1000)
+
+    return () => {
+      if (autoRollTimerRef.current) {
+        clearTimeout(autoRollTimerRef.current)
+        autoRollTimerRef.current = null
+      }
+      if (autoRollHintTimerRef.current) {
+        clearInterval(autoRollHintTimerRef.current)
+        autoRollHintTimerRef.current = null
+      }
+    }
+  }, [handleRoll, hasRolledThisTurn, isCurrentUserTurn, isGameEnded, isRolling, matchSnapshot?.currentTurnUserId, rollsLeft])
+
+  useEffect(() => {
+    if (!hasRolledThisTurn) return
+
+    const resetTimer = window.setTimeout(() => setTimeLeft(TURN_SECONDS), 0)
+
+    return () => window.clearTimeout(resetTimer)
+  }, [hasRolledThisTurn, matchId, matchSnapshot?.currentRound, matchSnapshot?.currentTurnUserId, rollsLeft])
+
+  useEffect(() => {
+    if (isGameEnded || !matchSnapshot?.currentTurnUserId || !hasRolledThisTurn || isRolling) return
+
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+    }
+
+    countdownTimerRef.current = setInterval(() => {
       setTimeLeft((current) => {
         if (current <= 1) {
-          window.clearInterval(countdownTimer)
-          handleRoll()
-          return TURN_SECONDS
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current)
+            countdownTimerRef.current = null
+          }
+          if (isCurrentUserTurn) {
+            if (rollsLeft > 0) {
+              handleRoll()
+            } else if (hasRolledThisTurnRef.current) {
+              void autoSelectHighestScore(matchSnapshotRef.current?.selectableScores)
+            }
+          }
+          return 0
         }
 
         return current - 1
       })
     }, 1000)
 
-    return () => window.clearInterval(countdownTimer)
-  }, [handleRoll, isCurrentUserTurn, isRolling, rollsLeft])
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+    }
+  }, [autoSelectHighestScore, handleRoll, hasRolledThisTurn, isCurrentUserTurn, isGameEnded, isRolling, matchSnapshot?.currentTurnUserId, rollsLeft])
 
   useEffect(() => {
     if (!isRolling) return
@@ -445,8 +1160,13 @@ export default function GamePage() {
     return () => {
       if (rollTimerRef.current) clearTimeout(rollTimerRef.current)
       if (remoteRollTimerRef.current) clearTimeout(remoteRollTimerRef.current)
+      if (autoRollTimerRef.current) clearTimeout(autoRollTimerRef.current)
+      if (autoRollHintTimerRef.current) clearInterval(autoRollHintTimerRef.current)
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current)
     }
   }, [])
+
+  const showAutoRollHint = isCurrentUserTurn && !hasRolledThisTurn && !isRolling && rollsLeft > 0
 
   if (!hasMounted || !matchSnapshot) {
     return (
@@ -653,15 +1373,34 @@ export default function GamePage() {
         </div>
       </div>
 
-      <ScorePanel />
+      <ScorePanel
+        selectableScores={matchSnapshot.selectableScores}
+        scorePlayers={visiblePlayers}
+        currentUserId={currentUserId}
+        currentTurnUserId={matchSnapshot.currentTurnUserId}
+        selectedScores={selectedScores}
+        totalScores={totalScores}
+        selectingScoreKey={selectingScoreKey}
+        onSelectScore={handleSelectScore}
+      />
 
       {isCurrentUserTurn && (
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.5 }}
-        className="absolute bottom-5 left-0 right-0 z-30 flex items-center justify-center"
+        className="absolute bottom-5 left-0 right-0 z-30 flex flex-col items-center justify-center gap-2"
       >
+        {showAutoRollHint && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            className="rounded-full border border-[#FFD04A]/28 bg-[#070b2e]/70 px-4 py-1.5 text-[13px] font-bold text-[#FFD04A] shadow-[0_0_18px_rgba(255,208,74,0.14)] backdrop-blur-md"
+          >
+            15s 后无操作，自动投掷
+          </motion.div>
+        )}
         <motion.button
           onClick={handleRoll}
           disabled={isRolling || rollsLeft <= 0}
@@ -822,7 +1561,28 @@ function ChatPanel() {
   )
 }
 
-function ScorePanel() {
+function ScorePanel({
+  selectableScores,
+  scorePlayers,
+  currentUserId,
+  currentTurnUserId,
+  selectedScores,
+  totalScores,
+  selectingScoreKey,
+  onSelectScore,
+}: {
+  selectableScores: SelectableScore[]
+  scorePlayers: Player[]
+  currentUserId?: number
+  currentTurnUserId?: number
+  selectedScores: Record<number, Record<string, SelectedScore>>
+  totalScores: Record<number, number>
+  selectingScoreKey: string | null
+  onSelectScore: (scoreKey: string) => void
+}) {
+  const selectableScoreMap = useMemo(() => buildSelectableScoreMap(selectableScores), [selectableScores])
+  const scoreColumns = useMemo(() => scorePlayers.slice(0, 2), [scorePlayers])
+
   return (
     <motion.div
       initial={{ x: 40, opacity: 0 }}
@@ -840,8 +1600,11 @@ function ScorePanel() {
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[8px] bg-[#e6e7ff]/92 text-[#071058] shadow-[inset_0_0_0_1px_rgba(72,91,190,0.32)]">
         <div className="grid grid-cols-[1fr_64px_64px] bg-[#07105a] text-[13px] font-black text-white">
           <div className="px-3 py-2">{scoreSections[0].title}</div>
-          <div className="border-l border-blue-300/22 px-2 py-2 text-center">我方</div>
-          <div className="border-l border-blue-300/22 px-2 py-2 text-center">对方</div>
+          {scoreColumns.map((player, index) => (
+            <div key={player.id} className="truncate border-l border-blue-300/22 px-2 py-2 text-center">
+              {player.name || `P${index + 1}`}
+            </div>
+          ))}
         </div>
 
         <div className="max-h-[calc(100%-42px)] overflow-y-auto [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blue-900/28 [&::-webkit-scrollbar]:w-1">
@@ -863,8 +1626,21 @@ function ScorePanel() {
                   }`}
                 >
                   <div className={`flex items-center px-3 ${row.accent ? 'text-[#12227d]' : ''}`}>{row.label}</div>
-                  <ScoreCell />
-                  <ScoreCell />
+                  {scoreColumns.map((player) => {
+                    const isCurrentTurnColumn = player.id === currentTurnUserId
+                    const canSelectThisColumn = Boolean(currentUserId && currentUserId === currentTurnUserId && player.id === currentUserId)
+                    const selected = selectedScores[player.id]?.[row.key]
+
+                    return (
+                      <ScoreCell
+                        key={player.id}
+                        preview={isCurrentTurnColumn ? selectableScoreMap[row.key] : undefined}
+                        selected={selected}
+                        disabled={!canSelectThisColumn || selectingScoreKey !== null || Boolean(selected)}
+                        onSelect={() => onSelectScore(row.key)}
+                      />
+                    )
+                  })}
                 </div>
               ))}
             </div>
@@ -874,13 +1650,54 @@ function ScorePanel() {
 
       <div className="relative mt-3 grid grid-cols-[1fr_62px_62px] items-center gap-1">
         <div className="pl-2 text-[24px] font-black tracking-[0.04em] text-white [text-shadow:0_0_10px_rgba(94,124,255,0.65)]">总分</div>
-        <div className="h-[50px] rounded-lg border border-blue-400/40 bg-[#07105a]/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" />
-        <div className="h-[50px] rounded-lg border border-red-400/30 bg-[#080631]/82 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
+        {scoreColumns.map((player, index) => (
+          <div
+            key={player.id}
+            className={`flex h-[50px] items-center justify-center rounded-lg border text-[20px] font-black shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] ${
+              index === 0
+                ? 'border-blue-400/40 bg-[#07105a]/82 text-white'
+                : 'border-red-400/30 bg-[#080631]/82 text-white/90'
+            }`}
+          >
+            {totalScores[player.id] ?? ''}
+          </div>
+        ))}
       </div>
     </motion.div>
   )
 }
 
-function ScoreCell() {
+function ScoreCell({
+  preview,
+  selected,
+  disabled = true,
+  onSelect,
+}: {
+  preview?: ScorePreview
+  selected?: SelectedScore
+  disabled?: boolean
+  onSelect?: () => void
+}) {
+  if (selected) {
+    return (
+      <div className="flex items-center justify-center border-l border-[#6e7bd6]/30 bg-[#163c91]/88 text-[13px] font-black text-white shadow-[inset_0_0_0_1px_rgba(111,173,255,0.34)]">
+        {selected.roundScore}
+      </div>
+    )
+  }
+
+  if (preview) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onSelect}
+        className="flex h-full w-full items-center justify-center border-l border-[#6e7bd6]/30 bg-[#ffe072]/18 text-[13px] font-black text-[#a06600] transition enabled:cursor-pointer enabled:hover:bg-[#ffe072]/34 disabled:cursor-default disabled:opacity-80"
+      >
+        {preview.score ?? '可选'}
+      </button>
+    )
+  }
+
   return <div className="border-l border-[#6e7bd6]/30" />
 }

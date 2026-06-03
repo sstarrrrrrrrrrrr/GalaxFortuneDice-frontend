@@ -224,7 +224,7 @@ export default function LobbyPage() {
         />
 
         <div className="flex items-start gap-[1.8vw]">
-          <div className="flex h-[4.7vh] min-h-[40px] w-[20vw] min-w-[270px] items-center rounded-[10px] border border-white/14 bg-[#050a36]/62 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-[12px]">
+          <div className="flex h-[4.7vh] min-h-[40px] w-[20vw] min-w-[270px] items-center rounded-[10px] border border-[rgba(62,124,255,0.52)] bg-[rgba(4,12,58,0.7)] shadow-[0_0_13px_rgba(39,98,255,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-[12px] transition-[border-color,box-shadow,background] duration-300 ease-out focus-within:border-blue-200/70 focus-within:bg-[rgba(29,75,190,0.45)] focus-within:shadow-[0_0_20px_rgba(91,119,255,0.85),inset_0_1px_0_rgba(255,255,255,0.16)]">
             <input
               type="text"
               placeholder="输入房间号"
@@ -251,13 +251,13 @@ export default function LobbyPage() {
 
           <div className="flex items-center gap-[1.15vw]">
             <IconButton label="邮件">
-              <Mail className="h-[2.25vw] max-h-[38px] min-h-[28px] w-[2.25vw] min-w-[28px] max-w-[38px]" />
+              <Mail />
             </IconButton>
             <IconButton label="好友">
-              <Users className="h-[2.25vw] max-h-[38px] min-h-[28px] w-[2.25vw] min-w-[28px] max-w-[38px]" />
+              <Users />
             </IconButton>
             <IconButton label="设置">
-              <Settings className="h-[2.32vw] max-h-[40px] min-h-[29px] w-[2.32vw] min-w-[29px] max-w-[40px]" />
+              <Settings />
             </IconButton>
           </div>
         </div>
@@ -411,7 +411,11 @@ function IconButton({
   children: React.ReactNode
 }) {
   return (
-    <button type="button" aria-label={label} className="relative text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
+    <button
+      type="button"
+      aria-label={label}
+      className="relative grid h-[58px] w-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(62,124,255,0.52)] bg-[rgba(4,12,58,0.7)] text-white shadow-[0_0_13px_rgba(39,98,255,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] transition-[transform,box-shadow,background] duration-300 ease-out hover:-translate-y-px hover:bg-[rgba(29,75,190,0.65)] hover:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:-translate-y-px focus-visible:bg-[rgba(29,75,190,0.65)] focus-visible:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 [&_svg]:h-[52%] [&_svg]:w-[52%] [&_svg]:stroke-[2.2]"
+    >
       {children}
     </button>
   )

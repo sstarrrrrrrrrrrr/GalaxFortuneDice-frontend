@@ -204,6 +204,50 @@ function readReadyResponsePlayerPatch(
   }
 }
 
+function readMatchInfoNumber(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string') {
+      const parsed = Number(value)
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+
+  return undefined
+}
+
+function readMatchInfoString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+
+  return undefined
+}
+
+function normalizeMatchInfoPlayers(matchInfo?: Array<Record<string, unknown>>): MatchInfoPlayer[] {
+  if (!matchInfo) return []
+
+  return matchInfo.flatMap((player) => {
+    const userId = readMatchInfoNumber(player, ['user_id', 'userId', 'player_id', 'playerId', 'id'])
+    const nickname = readMatchInfoString(player, ['nickname', 'nick_name', 'name', 'username'])
+
+    if (!userId || !nickname) return []
+
+    return [{
+      ...player,
+      user_id: userId,
+      nickname,
+      id: readMatchInfoNumber(player, ['id']) ?? userId,
+      avatar: readMatchInfoString(player, ['avatar']),
+      team_id: readMatchInfoNumber(player, ['team_id', 'teamId']),
+      seat_no: readMatchInfoNumber(player, ['seat_no', 'seatNo', 'seat', 'position']),
+      ready_status: Boolean(player.ready_status),
+    }]
+  })
+}
+
 export default function RoomPage() {
   const router = useRouter()
   const params = useParams()
@@ -390,7 +434,7 @@ export default function RoomPage() {
           setIsStartingMatch(false)
           enterMatch({
             match_id: matchId,
-            match_info: (matchInfo ?? []) as StartMatchResponse['match_info'],
+            match_info: normalizeMatchInfoPlayers(matchInfo),
           })
           return
         }
@@ -842,16 +886,16 @@ function PlayerSlot({ slot, player }: { slot: number; player: Player }) {
         </div>
       )}
       <div className="flex-1" />
-      {player.ready ? (
+      {!player.isHost && player.ready ? (
         <div className="mb-[14%] flex items-center gap-[0.42vw] text-[clamp(11px,0.95vw,16px)] font-black text-[#18ffef]">
           <Check className="h-[1.2vw] max-h-[18px] min-h-[14px] w-[1.2vw] min-w-[14px] max-w-[18px] rounded-full bg-[#18ffef] p-[2px] text-[#07105b] stroke-[4]" />
           已准备
         </div>
-      ) : (
+      ) : !player.isHost ? (
         <div className="mb-[14%] rounded-[6px] bg-[#5847ff] px-[13%] py-[5%] text-[clamp(11px,0.95vw,16px)] font-black shadow-[0_0_13px_rgba(98,84,255,0.7)]">
           未准备
         </div>
-      )}
+      ) : null}
     </article>
   )
 }
