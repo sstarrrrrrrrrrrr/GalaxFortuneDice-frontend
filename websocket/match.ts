@@ -34,6 +34,19 @@ function buildMatchSocketUrl(matchId: string, authToken?: string) {
   return apiUrl.toString()
 }
 
+function redactSocketUrl(socketUrl: string) {
+  try {
+    const url = new URL(socketUrl)
+    if (url.searchParams.has('token')) {
+      url.searchParams.set('token', '[redacted]')
+    }
+
+    return url.toString()
+  } catch {
+    return socketUrl
+  }
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
 }
@@ -77,19 +90,19 @@ export function connectMatchChannel({
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[match websocket open]', socket.url)
+      console.log('[match websocket open]', redactSocketUrl(socket.url))
     }
     onOpen?.()
   })
   socket.addEventListener('error', () => {
     if (process.env.NODE_ENV === 'development') {
-      console.error('[match websocket error]', socket.url)
+      console.warn('[match websocket error]', redactSocketUrl(socket.url))
     }
     if (!disposed) onError?.()
   })
   socket.addEventListener('close', () => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('[match websocket close]', socket.url)
+      console.log('[match websocket close]', redactSocketUrl(socket.url))
     }
     if (!disposed) onClose?.()
   })

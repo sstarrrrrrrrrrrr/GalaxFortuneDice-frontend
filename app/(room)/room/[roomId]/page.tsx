@@ -266,10 +266,12 @@ export default function RoomPage() {
     ...(modeConfig[modeKey] ?? modeConfig['solo-3p']),
     maxPlayers: Number.isFinite(maxPlayersParam) && maxPlayersParam > 0 ? maxPlayersParam : (modeConfig[modeKey] ?? modeConfig['solo-3p']).maxPlayers,
   }
-  const isHostView = searchParams.get('role') !== 'player'
   const isGuestView = searchParams.get('guest') === 'true'
+  const roleParam = searchParams.get('role')
   const creatorIdParam = Number(searchParams.get('creatorId'))
-  const creatorId = Number.isFinite(creatorIdParam) && creatorIdParam > 0 ? creatorIdParam : isHostView ? hydratedUser?.id : undefined
+  const hasCreatorIdParam = Number.isFinite(creatorIdParam) && creatorIdParam > 0
+  const isHostView = roleParam === 'host' || (roleParam !== 'player' && hasCreatorIdParam && hydratedUser?.id === creatorIdParam)
+  const creatorId = hasCreatorIdParam ? creatorIdParam : isHostView ? hydratedUser?.id : undefined
   const [players, setPlayers] = useState(() => createInitialPlayers(null, isHostView))
   const [roomMessages, setRoomMessages] = useState<RoomChannelNotice[]>([])
   const [notice, setNotice] = useState('')

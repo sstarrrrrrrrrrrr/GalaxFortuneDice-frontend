@@ -288,6 +288,18 @@ function isGameEndedEvent(rawType?: string) {
   return rawType === 'game_ended'
 }
 
+function isMatchFinishedState(currentRound?: number, phase?: string) {
+  const normalizedPhase = phase?.toLowerCase()
+
+  return (
+    (currentRound !== undefined && currentRound > TOTAL_ROUNDS) ||
+    normalizedPhase === 'ended' ||
+    normalizedPhase === 'finished' ||
+    normalizedPhase === 'completed' ||
+    normalizedPhase === 'game_over'
+  )
+}
+
 function isScoreSelectedEvent(rawType?: string) {
   return [
     'score_selected',
@@ -472,6 +484,8 @@ export default function GamePage() {
   const hydratedUser = hasMounted ? currentUser : null
   const requestedMode = searchParams.get('mode')
   const modeKey: ModeKey = requestedMode && requestedMode in modeConfig ? (requestedMode as ModeKey) : 'solo-2p'
+  const roleParam = searchParams.get('role')
+  const resultRoute = `/game/${matchId}/result?mode=${modeKey}${roleParam ? `&role=${encodeURIComponent(roleParam)}` : ''}`
   const mode = modeConfig[modeKey]
   const [matchSnapshot, setMatchSnapshot] = useState<MatchSnapshot | null>(null)
   const [dice, setDice] = useState(initialDice)
@@ -526,12 +540,84 @@ export default function GamePage() {
 
   const visiblePlayers = useMemo(() => displayPlayers.slice(0, mode.maxPlayers), [displayPlayers, mode.maxPlayers])
 
+  const finishMatch = useCallback(
+    (fallback: { results?: MatchEndedResult[]; winner?: string | number } = {}) => {
+      if (gameEndedRef.current) return
+
+      gameEndedRef.current = true
+      setIsGameEnded(true)
+
+      if (rollTimerRef.current) clearTimeout(rollTimerRef.current)
+      if (remoteRollTimerRef.current) clearTimeout(remoteRollTimerRef.current)
+      if (autoRollTimerRef.current) {
+        clearTimeout(autoRollTimerRef.current)
+        autoRollTimerRef.current = null
+      }
+      if (autoRollHintTimerRef.current) {
+        clearInterval(autoRollHintTimerRef.current)
+        autoRollHintTimerRef.current = null
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+      isRollingRef.current = false
+      setIsRolling(false)
+      setTimeLeft(0)
+
+      const fallbackResults =
+        fallback.results?.length
+          ? fallback.results
+          : matchSnapshotRef.current?.players.map((player) => ({
+              user_id: player.user_id,
+              nickname: player.nickname,
+              total_score:
+                totalScores[player.user_id] ??
+                Math.max(
+                  0,
+                  ...Object.values(selectedScoresRef.current[player.user_id] ?? {}).map((score) => score.totalScore),
+                ),
+            })) ?? []
+
+      void getFinalScores(matchId)
+        .then((finalScores) => {
+          console.log('[match final_score data]', finalScores)
+          storeMatchResult({
+            matchId,
+            results: finalScores.length > 0 ? finalScores : fallbackResults,
+            winner: fallback.winner,
+            endedAt: Date.now(),
+          })
+          router.replace(resultRoute)
+        })
+        .catch((error) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[match final_score error]', error)
+          }
+
+          storeMatchResult({
+            matchId,
+            results: fallbackResults,
+            winner: fallback.winner,
+            endedAt: Date.now(),
+          })
+          router.replace(resultRoute)
+        })
+    },
+    [matchId, resultRoute, router, totalScores],
+  )
+
   const refreshMatchState = useCallback(
     async ({ syncLockedDice = true }: { syncLockedDice?: boolean } = {}) => {
       if (gameEndedRef.current) return
 
       const matchState = await getMatchState(matchId)
       debugSelectableScores(matchState.selectable_scores)
+
+      if (isMatchFinishedState(matchState.current_round, matchState.phase)) {
+        finishMatch()
+        return matchState
+      }
 
       setMatchSnapshot((currentSnapshot) =>
         createMatchSnapshotFromState(matchState, currentSnapshot?.players ?? []),
@@ -559,7 +645,7 @@ export default function GamePage() {
 
       return matchState
     },
-    [matchId],
+    [finishMatch, matchId],
   )
 
   const refreshMatchStateAfterRoll = useCallback(
@@ -819,54 +905,8 @@ export default function GamePage() {
         if (!message) return
 
         if (isGameEndedEvent(rawType)) {
-          if (gameEndedRef.current) return
-
           const gameEndedPayload = readGameEndedPayload(message as GameEndedMessage)
-          gameEndedRef.current = true
-          setIsGameEnded(true)
-
-          if (rollTimerRef.current) clearTimeout(rollTimerRef.current)
-          if (remoteRollTimerRef.current) clearTimeout(remoteRollTimerRef.current)
-          if (autoRollTimerRef.current) {
-            clearTimeout(autoRollTimerRef.current)
-            autoRollTimerRef.current = null
-          }
-          if (autoRollHintTimerRef.current) {
-            clearInterval(autoRollHintTimerRef.current)
-            autoRollHintTimerRef.current = null
-          }
-          if (countdownTimerRef.current) {
-            clearInterval(countdownTimerRef.current)
-            countdownTimerRef.current = null
-          }
-          isRollingRef.current = false
-          setIsRolling(false)
-          setTimeLeft(0)
-
-          void getFinalScores(matchId)
-            .then((finalScores) => {
-              console.log('[match final_score data]', finalScores)
-              storeMatchResult({
-                matchId,
-                results: finalScores,
-                winner: gameEndedPayload.winner,
-                endedAt: Date.now(),
-              })
-              router.replace(`/game/${matchId}/result?mode=${modeKey}`)
-            })
-            .catch((error) => {
-              if (process.env.NODE_ENV === 'development') {
-                console.error('[match final_score error]', error)
-              }
-
-              storeMatchResult({
-                matchId,
-                results: gameEndedPayload.results,
-                winner: gameEndedPayload.winner,
-                endedAt: Date.now(),
-              })
-              router.replace(`/game/${matchId}/result?mode=${modeKey}`)
-            })
+          finishMatch(gameEndedPayload)
           return
         }
 
@@ -1011,7 +1051,7 @@ export default function GamePage() {
         }))
       },
     })
-  }, [hasMounted, matchId, modeKey, refreshMatchState, refreshMatchStateAfterRoll, router])
+  }, [finishMatch, hasMounted, matchId, refreshMatchState, refreshMatchStateAfterRoll])
 
   useEffect(() => {
     if (!hasMounted || !matchId) return
@@ -1070,11 +1110,11 @@ export default function GamePage() {
     if (autoRollTimerRef.current) {
       clearTimeout(autoRollTimerRef.current)
     }
+
+    const resetHintTimer = window.setTimeout(() => setAutoRollHintSeconds(TURN_SECONDS), 0)
     if (autoRollHintTimerRef.current) {
       clearInterval(autoRollHintTimerRef.current)
     }
-
-    setAutoRollHintSeconds(TURN_SECONDS)
     autoRollHintTimerRef.current = setInterval(() => {
       setAutoRollHintSeconds((current) => Math.max(current - 1, 0))
     }, 1000)
@@ -1091,6 +1131,7 @@ export default function GamePage() {
     }, TURN_SECONDS * 1000)
 
     return () => {
+      window.clearTimeout(resetHintTimer)
       if (autoRollTimerRef.current) {
         clearTimeout(autoRollTimerRef.current)
         autoRollTimerRef.current = null
@@ -1398,7 +1439,8 @@ export default function GamePage() {
             exit={{ opacity: 0, y: 6 }}
             className="rounded-full border border-[#FFD04A]/28 bg-[#070b2e]/70 px-4 py-1.5 text-[13px] font-bold text-[#FFD04A] shadow-[0_0_18px_rgba(255,208,74,0.14)] backdrop-blur-md"
           >
-            15s 后无操作，自动投掷
+            
+            {autoRollHintSeconds}s 后无操作，自动投掷
           </motion.div>
         )}
         <motion.button

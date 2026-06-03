@@ -51,13 +51,24 @@ export interface MatchSnapshot {
 }
 
 export interface MatchEndedResult {
+  id?: number
   user_id?: number
   userId?: number
+  player_id?: number
+  playerId?: number
   nickname?: string
   name?: string
   score?: number
   total_score?: number
   totalScore?: number
+  round_score?: number
+  roundScore?: number
+  rank?: number
+  is_win?: string | number | boolean
+  isWin?: string | number | boolean
+  game_mode?: number
+  duration?: string
+  created_at?: string
   [key: string]: unknown
 }
 
@@ -111,6 +122,61 @@ interface ApiEnvelope<T> {
   code: number
   msg?: string
   data: T
+}
+
+type FinalScorePayload =
+  | FinalScoreResult[]
+  | {
+      results?: FinalScoreResult[]
+      player_scores?: FinalScoreResult[]
+      playerScores?: FinalScoreResult[]
+      final_scores?: FinalScoreResult[]
+      finalScores?: FinalScoreResult[]
+      scores?: FinalScoreResult[]
+      records?: FinalScoreResult[]
+      list?: FinalScoreResult[]
+      items?: FinalScoreResult[]
+      data?: unknown
+      [key: string]: unknown
+    }
+
+function isFinalScoreLike(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+
+  const record = value as Record<string, unknown>
+  return (
+    'user_id' in record ||
+    'userId' in record ||
+    'player_id' in record ||
+    'playerId' in record ||
+    'total_score' in record ||
+    'totalScore' in record ||
+    'score' in record
+  )
+}
+
+function normalizeFinalScorePayload(value: unknown, depth = 0): FinalScoreResult[] {
+  if (depth > 4 || !value) return []
+
+  if (Array.isArray(value)) {
+    if (value.some(isFinalScoreLike)) {
+      return value.filter(isFinalScoreLike) as FinalScoreResult[]
+    }
+
+    return value.flatMap((item) => normalizeFinalScorePayload(item, depth + 1))
+  }
+
+  if (typeof value !== 'object') return []
+
+  const record = value as Record<string, unknown>
+  const candidateKeys = ['results', 'player_scores', 'playerScores', 'final_scores', 'finalScores', 'scores', 'records', 'list', 'items', 'data']
+
+  for (const key of candidateKeys) {
+    const normalized = normalizeFinalScorePayload(record[key], depth + 1)
+    if (normalized.length > 0) return normalized
+  }
+
+  return []
 }
 
 function unwrapApiData<T>(response: T | ApiEnvelope<T>) {
@@ -240,10 +306,12 @@ export async function selectScore(payload: SelectScoreRequest) {
 }
 
 export async function getFinalScores(matchId: string | number) {
-  const { data } = await matchClient.get<FinalScoreResult[] | ApiEnvelope<FinalScoreResult[]>>('/api/match/final_score', {
+  const { data } = await matchClient.get<FinalScorePayload | ApiEnvelope<FinalScorePayload>>('/api/match/final_score', {
     params: {
       match_id: matchId,
     },
   })
-  return unwrapApiData(data)
+  const finalScores = unwrapApiData(data)
+
+  return normalizeFinalScorePayload(finalScores)
 }
