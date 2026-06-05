@@ -39,7 +39,6 @@ const scoreSections: ScoreSection[] = [
       { label: '四（4点）', key: 'fours' },
       { label: '五（5点）', key: 'fives' },
       { label: '六（6点）', key: 'sixes' },
-      { label: '小计', key: 'upperSubtotal', strong: true },
       { label: '奖分（≥63分）★', key: 'bonus', accent: true },
     ],
   },
@@ -52,7 +51,6 @@ const scoreSections: ScoreSection[] = [
       { label: '小顺子（4连）', key: 'smallStr' },
       { label: '大顺子（5连）', key: 'largeStr' },
       { label: '任意牌（机会）', key: 'chance' },
-      { label: '小计', key: 'lowerSubtotal', strong: true },
     ],
   },
   {
@@ -509,7 +507,10 @@ export function ScorePanel({
   selectingScoreKey: string | null
   onSelectScore: (scoreKey: string) => void
 }) {
-  const scoreColumns = scorePlayers.slice(0, 2)
+  const scoreColumns = scorePlayers.slice(0, 4)
+  const scoreColumnWidth = scoreColumns.length >= 4 ? 46 : scoreColumns.length === 3 ? 54 : 64
+  const scoreGridTemplateColumns = `minmax(0, 1fr) repeat(${scoreColumns.length}, ${scoreColumnWidth}px)`
+  const totalGridTemplateColumns = `minmax(0, 1fr) repeat(${scoreColumns.length}, ${Math.max(scoreColumnWidth - 2, 44)}px)`
 
   return (
     <motion.div
@@ -526,7 +527,10 @@ export function ScorePanel({
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[8px] bg-[#e6e7ff]/92 text-[#071058] shadow-[inset_0_0_0_1px_rgba(72,91,190,0.32)]">
-        <div className="grid grid-cols-[1fr_64px_64px] bg-[#07105a] text-[13px] font-black text-white">
+        <div
+          className="grid bg-[#07105a] text-[13px] font-black text-white"
+          style={{ gridTemplateColumns: scoreGridTemplateColumns }}
+        >
           <div className="px-3 py-2">{scoreSections[0].title}</div>
           {scoreColumns.map((player, index) => (
             <div key={player.id} className="truncate border-l border-blue-300/22 px-2 py-2 text-center">
@@ -539,19 +543,24 @@ export function ScorePanel({
           {scoreSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {sectionIndex > 0 && (
-                <div className="grid grid-cols-[1fr_64px_64px] bg-[#07105a] text-[13px] font-black text-white">
+                <div
+                  className="grid bg-[#07105a] text-[13px] font-black text-white"
+                  style={{ gridTemplateColumns: scoreGridTemplateColumns }}
+                >
                   <div className="px-3 py-1.5">{section.title}</div>
-                  <div className="border-l border-blue-300/18" />
-                  <div className="border-l border-blue-300/18" />
+                  {scoreColumns.map((player) => (
+                    <div key={player.id} className="border-l border-blue-300/18" />
+                  ))}
                 </div>
               )}
 
               {section.rows.map((row) => (
                 <div
                   key={row.key}
-                  className={`grid min-h-[27px] grid-cols-[1fr_64px_64px] border-b border-[#6e7bd6]/28 text-[13px] font-black ${
+                  className={`grid min-h-[27px] border-b border-[#6e7bd6]/28 text-[13px] font-black ${
                     row.strong ? 'bg-[#dce0ff]' : 'bg-[#eef0ff]'
                   }`}
+                  style={{ gridTemplateColumns: scoreGridTemplateColumns }}
                 >
                   <div className={`flex items-center px-3 ${row.accent ? 'text-[#12227d]' : ''}`}>{row.label}</div>
                   {scoreColumns.map((player) => {
@@ -576,7 +585,10 @@ export function ScorePanel({
         </div>
       </div>
 
-      <div className="relative mt-3 grid grid-cols-[1fr_62px_62px] items-center gap-1">
+      <div
+        className="relative mt-3 grid items-center gap-1"
+        style={{ gridTemplateColumns: totalGridTemplateColumns }}
+      >
         <div className="pl-2 text-[24px] font-black tracking-[0.04em] text-white [text-shadow:0_0_10px_rgba(94,124,255,0.65)]">总分</div>
         {scoreColumns.map((player, index) => (
           <div

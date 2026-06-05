@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { create } from 'zustand'
 import { AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
 import { normalizeAvatarSrc } from '@/utils/avatar'
@@ -25,6 +26,8 @@ const CURRENT_USER_STORAGE_KEY = 'galax_user_info'
 interface AuthSessionState {
   user: CurrentUser | null
   token: string
+  isHydrated: boolean
+  hydrateSession: () => void
   setSession: (user: CurrentUser, token: string) => void
   clearSession: () => void
 }
@@ -76,9 +79,19 @@ function readAuthToken() {
 }
 
 // 保存当前登录会话，并同步写入 localStorage。
-export const useAuthSessionStore = create<AuthSessionState>((set) => ({
-  user: readCurrentUser(),
-  token: readAuthToken(),
+export const useAuthSessionStore = create<AuthSessionState>((set, get) => ({
+  user: null,
+  token: '',
+  isHydrated: false,
+  hydrateSession: () => {
+    if (get().isHydrated) return
+
+    set({
+      user: readCurrentUser(),
+      token: readAuthToken(),
+      isHydrated: true,
+    })
+  },
   setSession: (user, token) => {
     const normalizedUser = normalizeCurrentUser(user)
     if (!normalizedUser) return
@@ -88,7 +101,7 @@ export const useAuthSessionStore = create<AuthSessionState>((set) => ({
       window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
     }
 
-    set({ user: normalizedUser, token })
+    set({ user: normalizedUser, token, isHydrated: true })
   },
   clearSession: () => {
     if (typeof window !== 'undefined') {
@@ -96,13 +109,20 @@ export const useAuthSessionStore = create<AuthSessionState>((set) => ({
       window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
     }
 
-    set({ user: null, token: '' })
+    set({ user: null, token: '', isHydrated: true })
   },
 }))
 
 // 读取当前登录用户，供页面和组件派生展示信息。
 export function useCurrentUser() {
-  return useAuthSessionStore((state) => state.user)
+  const currentUser = useAuthSessionStore((state) => state.user)
+  const hydrateSession = useAuthSessionStore((state) => state.hydrateSession)
+
+  useEffect(() => {
+    hydrateSession()
+  }, [hydrateSession])
+
+  return currentUser
 }
 
 export { AUTH_TOKEN_STORAGE_KEY, CURRENT_USER_STORAGE_KEY }

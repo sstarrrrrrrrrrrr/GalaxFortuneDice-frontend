@@ -182,14 +182,14 @@ function RankingTopbar() {
     <header className={styles.topbar}>
       <div className={styles.actions} aria-label="顶部操作">
         <button className={styles.iconButton} type="button" aria-label="消息">
-          <Mail size={28} />
+          <Mail />
           <span className={styles.badge}>1</span>
         </button>
         <button className={styles.iconButton} type="button" aria-label="好友">
-          <Users size={30} />
+          <Users />
         </button>
         <button className={styles.iconButton} type="button" aria-label="设置">
-          <Settings size={32} fill="currentColor" />
+          <Settings />
         </button>
       </div>
     </header>
