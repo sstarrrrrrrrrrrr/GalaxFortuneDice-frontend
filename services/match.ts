@@ -1,5 +1,6 @@
 import { createApiClient } from './api'
 import { type RoomUserInfo } from './room'
+import { unwrapApiData, type ApiEnvelope } from './shared'
 
 const matchClient = createApiClient()
 
@@ -118,12 +119,6 @@ export interface SelectScoreResponse {
   total_score: number
 }
 
-interface ApiEnvelope<T> {
-  code: number
-  msg?: string
-  data: T
-}
-
 type FinalScorePayload =
   | FinalScoreResult[]
   | {
@@ -140,6 +135,7 @@ type FinalScorePayload =
       [key: string]: unknown
     }
 
+// 判断一个对象是否像后端最终分数记录。
 function isFinalScoreLike(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
 
@@ -155,6 +151,7 @@ function isFinalScoreLike(value: unknown) {
   )
 }
 
+// 递归解包最终分数响应，兼容多层 data/results/list 等包装。
 function normalizeFinalScorePayload(value: unknown, depth = 0): FinalScoreResult[] {
   if (depth > 4 || !value) return []
 
@@ -179,27 +176,17 @@ function normalizeFinalScorePayload(value: unknown, depth = 0): FinalScoreResult
   return []
 }
 
-function unwrapApiData<T>(response: T | ApiEnvelope<T>) {
-  if (response && typeof response === 'object' && 'code' in response && 'data' in response) {
-    const envelope = response as ApiEnvelope<T>
-    if (envelope.code !== 0 && envelope.code !== 200) {
-      throw new Error(envelope.msg || '请求失败')
-    }
-
-    return envelope.data
-  }
-
-  return response as T
-}
-
+// 生成对局快照的 sessionStorage key。
 export function getMatchSnapshotStorageKey(matchId: string | number) {
   return `${MATCH_SNAPSHOT_STORAGE_PREFIX}${matchId}`
 }
 
+// 生成对局结算结果的 sessionStorage key。
 export function getMatchResultStorageKey(matchId: string | number) {
   return `${MATCH_RESULT_STORAGE_PREFIX}${matchId}`
 }
 
+// 根据开局响应创建前端对局快照，用于 VS 页到对局页之间传递初始数据。
 function createMatchSnapshot(match: StartMatchResponse, roomId?: string | number): MatchSnapshot {
   const firstPlayer = match.match_info[0]
 
@@ -218,6 +205,7 @@ function createMatchSnapshot(match: StartMatchResponse, roomId?: string | number
   }
 }
 
+// 根据对局状态接口创建快照，保留页面已有玩家列表。
 export function createMatchSnapshotFromState(
   state: MatchStateResponse,
   players: MatchInfoPlayer[] = [],
@@ -237,12 +225,14 @@ export function createMatchSnapshotFromState(
   }
 }
 
+// 保存开局快照，避免跨页面跳转时丢失玩家和房间信息。
 export function storeMatchSnapshot(match: StartMatchResponse, roomId?: string | number) {
   if (typeof window === 'undefined') return
 
   window.sessionStorage.setItem(getMatchSnapshotStorageKey(match.match_id), JSON.stringify(createMatchSnapshot(match, roomId)))
 }
 
+// 读取对局快照，兼容旧的 StartMatchResponse 存储格式。
 export function readMatchSnapshot(matchId: string | number) {
   if (typeof window === 'undefined' || !matchId) return null
 
@@ -261,12 +251,14 @@ export function readMatchSnapshot(matchId: string | number) {
   }
 }
 
+// 保存对局结算结果，供 result 页面兜底展示。
 export function storeMatchResult(matchResult: MatchEndedSnapshot) {
   if (typeof window === 'undefined') return
 
   window.sessionStorage.setItem(getMatchResultStorageKey(matchResult.matchId), JSON.stringify(matchResult))
 }
 
+// 读取对局结算结果，解析失败时清理损坏缓存。
 export function readMatchResult(matchId: string | number) {
   if (typeof window === 'undefined' || !matchId) return null
 
@@ -281,11 +273,13 @@ export function readMatchResult(matchId: string | number) {
   }
 }
 
+// 调用开始对局接口，通常由房主在 VS 过场页触发。
 export async function startMatch(payload: StartMatchRequest) {
   const { data } = await matchClient.post<StartMatchResponse | ApiEnvelope<StartMatchResponse>>('/api/match/start', payload)
   return unwrapApiData(data)
 }
 
+// 获取当前对局状态，包括回合、当前玩家、骰子和可选分数。
 export async function getMatchState(matchId: string | number) {
   const { data } = await matchClient.get<MatchStateResponse | ApiEnvelope<MatchStateResponse>>('/api/match/state', {
     params: {
@@ -295,16 +289,19 @@ export async function getMatchState(matchId: string | number) {
   return unwrapApiData(data)
 }
 
+// 调用投掷接口，正式骰子结果由后端返回。
 export async function rollDice(payload: RollDiceRequest) {
   const { data } = await matchClient.post<RollDiceResponse | ApiEnvelope<RollDiceResponse>>('/api/match/roll_dice', payload)
   return unwrapApiData(data)
 }
 
+// 调用选分接口，正式分数由后端校验并返回。
 export async function selectScore(payload: SelectScoreRequest) {
   const { data } = await matchClient.post<SelectScoreResponse | ApiEnvelope<SelectScoreResponse>>('/api/match/select_score', payload)
   return unwrapApiData(data)
 }
 
+// 获取后端最终分数，并规整成统一的结果数组。
 export async function getFinalScores(matchId: string | number) {
   const { data } = await matchClient.get<FinalScorePayload | ApiEnvelope<FinalScorePayload>>('/api/match/final_score', {
     params: {

@@ -3,11 +3,12 @@
 import Image from 'next/image'
 import { UserRound } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { DEFAULT_AVATAR_SRC } from '@/utils/avatar'
 
 export default function ProfilePage() {
   const currentUser = useCurrentUser()
   const nickname = currentUser?.nickname ?? '未登录'
-  const avatar = currentUser?.avatar || '/images/default-avatar.png'
+  const avatar = currentUser?.avatar || DEFAULT_AVATAR_SRC
   const phone = currentUser?.phone || '未登录'
   const exp = currentUser?.exp ?? 0
 

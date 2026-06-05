@@ -1,5 +1,5 @@
-import { API_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
 import { normalizeAvatarSrc } from '@/utils/avatar'
+import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, warnSocketDebug } from './shared'
 
 export type RoomMessageTone = 'green' | 'cyan' | 'pink' | 'gold'
 
@@ -57,30 +57,17 @@ const SEAT_KEYS = ['seat_no', 'seatNo', 'seat', 'position']
 const HOST_KEYS = ['is_host', 'isHost', 'host']
 const PLAYERS_KEYS = ['players', 'player_list', 'playerList', 'users', 'user_list', 'userList']
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return ''
-
-  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? ''
-}
-
+// 构造房间 WebSocket 地址。
 function buildRoomSocketUrl(roomId: string, authToken?: string) {
-  const apiUrl = new URL(API_BASE_URL)
-  apiUrl.protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
-  apiUrl.pathname = `/ws/room/${encodeURIComponent(roomId)}`
-  apiUrl.search = ''
-
-  const token = authToken || getAuthToken()
-  if (token) {
-    apiUrl.searchParams.set('token', token)
-  }
-
-  return apiUrl.toString()
+  return buildSocketUrl(`/ws/room/${encodeURIComponent(roomId)}`, authToken)
 }
 
+// 将未知值收窄为普通对象。
 function asRecord(value: unknown): UnknownRecord | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as UnknownRecord) : null
 }
 
+// 兼容字符串 JSON 和对象两种输入，解析成普通对象。
 function parseRecord(value: unknown): UnknownRecord | null {
   if (typeof value === 'string') {
     try {
@@ -93,10 +80,12 @@ function parseRecord(value: unknown): UnknownRecord | null {
   return asRecord(value)
 }
 
+// 将未知数组过滤成对象数组。
 function asRecordArray(value: unknown) {
   return Array.isArray(value) ? value.map(asRecord).filter((item): item is UnknownRecord => Boolean(item)) : []
 }
 
+// 递归收集消息中的所有对象节点，便于兼容后端多层 data/payload 包装。
 function collectRecords(value: unknown, depth = 0): UnknownRecord[] {
   if (depth > 5) return []
 
@@ -113,6 +102,7 @@ function collectRecords(value: unknown, depth = 0): UnknownRecord[] {
   ]
 }
 
+// 从多个对象中读取第一个匹配字段对应的对象数组。
 function readFirstRecordArray(records: UnknownRecord[], keys: string[]) {
   for (const record of records) {
     for (const key of keys) {
@@ -124,6 +114,7 @@ function readFirstRecordArray(records: UnknownRecord[], keys: string[]) {
   return []
 }
 
+// 从对象的多个候选字段中读取数字。
 function readNumber(record: UnknownRecord, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -137,6 +128,7 @@ function readNumber(record: UnknownRecord, keys: string[]) {
   return undefined
 }
 
+// 从多个对象中读取第一个可用数字。
 function readNumberFromRecords(records: Array<UnknownRecord | null | undefined>, keys: string[]) {
   for (const record of records) {
     if (!record) continue
@@ -148,6 +140,7 @@ function readNumberFromRecords(records: Array<UnknownRecord | null | undefined>,
   return undefined
 }
 
+// 从对象的多个候选字段中读取非空字符串。
 function readString(record: UnknownRecord, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -157,6 +150,7 @@ function readString(record: UnknownRecord, keys: string[]) {
   return undefined
 }
 
+// 从对象字段中读取布尔值，兼容 boolean、0/1 和 true/false 字符串。
 function readBoolean(record: UnknownRecord, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -172,6 +166,7 @@ function readBoolean(record: UnknownRecord, keys: string[]) {
   return false
 }
 
+// 从多个对象中读取第一个可用布尔值。
 function readBooleanFromRecords(records: Array<UnknownRecord | null | undefined>, keys: string[]) {
   for (const record of records) {
     if (!record) continue
@@ -183,6 +178,7 @@ function readBooleanFromRecords(records: Array<UnknownRecord | null | undefined>
   return undefined
 }
 
+// 读取可选布尔值，未命中时返回 undefined 以区分 false。
 function readOptionalBoolean(record: UnknownRecord, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -198,6 +194,7 @@ function readOptionalBoolean(record: UnknownRecord, keys: string[]) {
   return undefined
 }
 
+// 将后端玩家对象归一化为房间玩家完整信息。
 function normalizePlayer(player: UnknownRecord, creatorId?: number): RoomChannelPlayer | null {
   const id = readNumber(player, PLAYER_ID_KEYS)
   const name = readString(player, PLAYER_NAME_KEYS)
@@ -214,6 +211,7 @@ function normalizePlayer(player: UnknownRecord, creatorId?: number): RoomChannel
   }
 }
 
+// 将后端玩家变更对象归一化为局部补丁。
 function normalizePlayerPatch(player: UnknownRecord, creatorId?: number): RoomChannelPlayerPatch | null {
   const id = readNumber(player, PLAYER_ID_KEYS)
   const avatar = readString(player, ['avatar'])
@@ -231,6 +229,7 @@ function normalizePlayerPatch(player: UnknownRecord, creatorId?: number): RoomCh
   }
 }
 
+// 合并多个对象，用于把 message/data/payload 中的玩家字段摊平。
 function mergeRecords(...records: Array<UnknownRecord | null | undefined>) {
   return records.reduce<UnknownRecord>((merged, record) => {
     if (!record) return merged
@@ -242,6 +241,7 @@ function mergeRecords(...records: Array<UnknownRecord | null | undefined>) {
   }, {})
 }
 
+// 从多层消息对象中提取准备状态变更补丁。
 function extractReadyPatchFromRecords(records: Array<UnknownRecord | null | undefined>, creatorId?: number) {
   const id = readNumberFromRecords(records, PLAYER_ID_KEYS)
   const ready = readBooleanFromRecords(records, READY_KEYS)
@@ -255,6 +255,7 @@ function extractReadyPatchFromRecords(records: Array<UnknownRecord | null | unde
   }
 }
 
+// 读取房间消息类型，兼容 type/event/action 和多层 payload。
 function readEventType(message: UnknownRecord, data?: UnknownRecord) {
   const nestedData = parseRecord(data?.data)
   const nestedPayload = parseRecord(data?.payload)
@@ -270,10 +271,12 @@ function readEventType(message: UnknownRecord, data?: UnknownRecord) {
   ).toLowerCase()
 }
 
+// 判断是否为玩家准备状态事件。
 function isReadyEvent(eventType: string) {
   return eventType === 'player_ready' || eventType.includes('ready')
 }
 
+// 判断房间是否已关闭或解散。
 function isRoomClosedEvent(message: UnknownRecord, eventType: string) {
   const data = parseRecord(message.data)
   const nestedData = parseRecord(data?.data)
@@ -303,6 +306,7 @@ function isRoomClosedEvent(message: UnknownRecord, eventType: string) {
   )
 }
 
+// 判断是否为开局/开始对局事件。
 function isMatchStartEvent(eventType: string) {
   return (
     eventType.includes('match_start') ||
@@ -313,6 +317,7 @@ function isMatchStartEvent(eventType: string) {
   )
 }
 
+// 从房间广播中提取对局开始事件和 match_info。
 function extractMatchEvent(message: UnknownRecord) {
   const data = parseRecord(message.data)
   const records = collectRecords(message)
@@ -329,6 +334,7 @@ function extractMatchEvent(message: UnknownRecord) {
   }
 }
 
+// 从房间广播中提取完整玩家列表。
 function extractPlayers(message: UnknownRecord) {
   const data = parseRecord(message.data)
   const nestedData = parseRecord(data?.data)
@@ -377,6 +383,7 @@ function extractPlayers(message: UnknownRecord) {
     : undefined
 }
 
+// 从房间广播中提取单个玩家加入、离开或准备状态变更。
 function extractPlayerEvent(message: UnknownRecord) {
   const data = parseRecord(message.data)
   const nestedData = parseRecord(data?.data)
@@ -431,6 +438,7 @@ function extractPlayerEvent(message: UnknownRecord) {
   return {}
 }
 
+// 从房间广播中提取可展示的房间消息。
 function extractNotice(message: UnknownRecord): RoomChannelNotice | undefined {
   const data = parseRecord(message.data)
   const nestedData = parseRecord(data?.data)
@@ -471,6 +479,7 @@ function extractNotice(message: UnknownRecord): RoomChannelNotice | undefined {
   return undefined
 }
 
+// 创建房间消息对象。
 function createNotice(name: string, text: string, tone: RoomMessageTone): RoomChannelNotice {
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -480,6 +489,7 @@ function createNotice(name: string, text: string, tone: RoomMessageTone): RoomCh
   }
 }
 
+// 解析房间 WebSocket 原始消息，并归一化成页面关心的事件结构。
 function parseRoomMessage(rawMessage: string): RoomChannelEvent {
   const parsed = JSON.parse(rawMessage) as unknown
   const message = asRecord(parsed)
@@ -500,6 +510,7 @@ function parseRoomMessage(rawMessage: string): RoomChannelEvent {
   }
 }
 
+// 建立房间 WebSocket 连接，并返回清理函数供页面卸载时关闭连接。
 export function connectRoomChannel({
   roomId,
   authToken,
@@ -517,38 +528,28 @@ export function connectRoomChannel({
       return
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[room websocket open]', socket.url)
-    }
+    logSocketDebug('[room websocket open]', redactSocketUrl(socket.url))
     onOpen?.()
   })
   socket.addEventListener('error', () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[room websocket error]', socket.url)
-    }
+    warnSocketDebug('[room websocket error]', redactSocketUrl(socket.url))
     if (!disposed) onError?.()
   })
   socket.addEventListener('close', () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[room websocket close]', socket.url)
-    }
+    logSocketDebug('[room websocket close]', redactSocketUrl(socket.url))
     if (!disposed) onClose?.()
   })
   socket.addEventListener('message', async (event) => {
     if (disposed) return
 
     // 浏览器 WebSocket 可能收到 string 或 Blob，这里统一转成字符串再解析。
-    const rawMessage = typeof event.data === 'string' ? event.data : event.data instanceof Blob ? await event.data.text() : ''
+    const rawMessage = await readSocketMessageData(event.data)
     if (disposed || !rawMessage) return
 
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[room websocket message]', rawMessage)
-      }
+      logSocketDebug('[room websocket message]', rawMessage)
       const parsedMessage = parseRoomMessage(rawMessage)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[room websocket parsed]', parsedMessage)
-      }
+      logSocketDebug('[room websocket parsed]', parsedMessage)
       onMessage(parsedMessage)
     } catch {
       onError?.()

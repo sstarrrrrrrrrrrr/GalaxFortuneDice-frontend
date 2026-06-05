@@ -1,4 +1,4 @@
-import { API_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
+import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, warnSocketDebug } from './shared'
 
 export interface MatchChannelEvent {
   rawType?: string
@@ -14,43 +14,17 @@ interface ConnectMatchChannelOptions {
   onClose?: () => void
 }
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return ''
-
-  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? ''
-}
-
+// 构造对局 WebSocket 地址。
 function buildMatchSocketUrl(matchId: string, authToken?: string) {
-  const apiUrl = new URL(API_BASE_URL)
-  apiUrl.protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
-  apiUrl.pathname = `/ws/match/${encodeURIComponent(matchId)}`
-  apiUrl.search = ''
-
-  const token = authToken || getAuthToken()
-  if (token) {
-    apiUrl.searchParams.set('token', token)
-  }
-
-  return apiUrl.toString()
+  return buildSocketUrl(`/ws/match/${encodeURIComponent(matchId)}`, authToken)
 }
 
-function redactSocketUrl(socketUrl: string) {
-  try {
-    const url = new URL(socketUrl)
-    if (url.searchParams.has('token')) {
-      url.searchParams.set('token', '[redacted]')
-    }
-
-    return url.toString()
-  } catch {
-    return socketUrl
-  }
-}
-
+// 将未知值收窄为普通对象，便于安全读取字段。
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
 }
 
+// 从多个候选字段中读取第一个非空字符串。
 function readString(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -60,6 +34,7 @@ function readString(record: Record<string, unknown>, keys: string[]) {
   return undefined
 }
 
+// 解析对局 WebSocket 原始消息，提取事件类型和消息对象。
 function parseMatchMessage(rawMessage: string): MatchChannelEvent {
   const parsed = JSON.parse(rawMessage) as unknown
   const message = asRecord(parsed)
@@ -72,6 +47,7 @@ function parseMatchMessage(rawMessage: string): MatchChannelEvent {
   }
 }
 
+// 建立对局 WebSocket 连接，并返回清理函数供页面卸载时关闭连接。
 export function connectMatchChannel({
   matchId,
   authToken,
@@ -89,33 +65,25 @@ export function connectMatchChannel({
       return
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[match websocket open]', redactSocketUrl(socket.url))
-    }
+    logSocketDebug('[match websocket open]', redactSocketUrl(socket.url))
     onOpen?.()
   })
   socket.addEventListener('error', () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[match websocket error]', redactSocketUrl(socket.url))
-    }
+    warnSocketDebug('[match websocket error]', redactSocketUrl(socket.url))
     if (!disposed) onError?.()
   })
   socket.addEventListener('close', () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[match websocket close]', redactSocketUrl(socket.url))
-    }
+    logSocketDebug('[match websocket close]', redactSocketUrl(socket.url))
     if (!disposed) onClose?.()
   })
   socket.addEventListener('message', async (event) => {
     if (disposed) return
 
-    const rawMessage = typeof event.data === 'string' ? event.data : event.data instanceof Blob ? await event.data.text() : ''
+    const rawMessage = await readSocketMessageData(event.data)
     if (disposed || !rawMessage) return
 
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[match websocket message]', rawMessage)
-      }
+      logSocketDebug('[match websocket message]', rawMessage)
       onMessage(parseMatchMessage(rawMessage))
     } catch {
       onError?.()

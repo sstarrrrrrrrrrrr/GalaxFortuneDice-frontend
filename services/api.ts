@@ -1,12 +1,13 @@
 import axios from 'axios'
 
-export const API_BASE_URL = 'http://192.168.21.32:8001'
+export const API_BASE_URL = 'http://192.168.21.24:8001'
 export const AUTH_TOKEN_STORAGE_KEY = 'galax_auth_token'
 
 interface ApiClientOptions {
   requireAuth?: boolean
 }
 
+// 从后端错误响应中读取可展示的错误信息。
 function readErrorMessage(value: unknown): string | null {
   if (!value || typeof value !== 'object') return null
 
@@ -24,6 +25,7 @@ function readErrorMessage(value: unknown): string | null {
   return null
 }
 
+// 将 Axios 错误统一转换为页面可直接展示的错误文案。
 function getApiErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
     return readErrorMessage(error.response?.data) ?? (error.response?.status ? `请求失败：${error.response.status}` : error.message)
@@ -32,12 +34,14 @@ function getApiErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : '请求失败'
 }
 
+// 从浏览器本地存储读取登录 token。
 function getStoredToken() {
   if (typeof window === 'undefined') return ''
 
   return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? ''
 }
 
+// 创建项目统一 Axios 实例，并按需自动注入 Authorization。
 export function createApiClient({ requireAuth = true }: ApiClientOptions = {}) {
   const client = axios.create({
     baseURL: API_BASE_URL,

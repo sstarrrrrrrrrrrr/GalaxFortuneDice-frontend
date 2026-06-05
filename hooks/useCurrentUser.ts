@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
 import { normalizeAvatarSrc } from '@/utils/avatar'
 
 export interface CurrentUser {
@@ -20,7 +21,6 @@ export interface CurrentUser {
 }
 
 const CURRENT_USER_STORAGE_KEY = 'galax_user_info'
-const AUTH_TOKEN_STORAGE_KEY = 'galax_auth_token'
 
 interface AuthSessionState {
   user: CurrentUser | null
@@ -29,6 +29,7 @@ interface AuthSessionState {
   clearSession: () => void
 }
 
+// 规整本地用户信息，兼容不同接口字段并补齐头像默认值。
 function normalizeCurrentUser(userInfo: Partial<CurrentUser>) {
   if (typeof userInfo.nickname !== 'string') return null
 
@@ -51,6 +52,7 @@ function normalizeCurrentUser(userInfo: Partial<CurrentUser>) {
   }
 }
 
+// 从 localStorage 读取并校验当前用户信息。
 function readCurrentUser() {
   if (typeof window === 'undefined') return null
 
@@ -66,12 +68,14 @@ function readCurrentUser() {
   }
 }
 
+// 从 localStorage 读取当前登录 token。
 function readAuthToken() {
   if (typeof window === 'undefined') return ''
 
   return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? ''
 }
 
+// 保存当前登录会话，并同步写入 localStorage。
 export const useAuthSessionStore = create<AuthSessionState>((set) => ({
   user: readCurrentUser(),
   token: readAuthToken(),
@@ -96,6 +100,7 @@ export const useAuthSessionStore = create<AuthSessionState>((set) => ({
   },
 }))
 
+// 读取当前登录用户，供页面和组件派生展示信息。
 export function useCurrentUser() {
   return useAuthSessionStore((state) => state.user)
 }

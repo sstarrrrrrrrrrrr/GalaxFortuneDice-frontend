@@ -43,6 +43,7 @@ interface ApiEnvelope<T> {
 
 type RankingPayload = RankingResponse | ApiEnvelope<RankingResponse>
 
+// 解包排行榜响应，兼容直接 rankings 和 data.rankings 两种结构。
 function unwrapRankings(payload: RankingPayload): RankingItem[] {
   if ('rankings' in payload && Array.isArray(payload.rankings)) {
     return payload.rankings
@@ -55,7 +56,10 @@ function unwrapRankings(payload: RankingPayload): RankingItem[] {
   return []
 }
 
+// 开发环境打印排行榜响应，便于对照后端字段。
 function logRankingResponse(endpoint: string, payload: RankingPayload, rankings: RankingItem[]) {
+  if (process.env.NODE_ENV !== 'development') return
+
   console.log('[ranking] backend response', {
     url: `${API_BASE_URL}${endpoint}`,
     raw: payload,
@@ -64,6 +68,17 @@ function logRankingResponse(endpoint: string, payload: RankingPayload, rankings:
   })
 }
 
+// 开发环境打印排行榜请求参数。
+function logRankingRequest(endpoint: string, params: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== 'development') return
+
+  console.log('[ranking] request start', {
+    url: `${API_BASE_URL}${endpoint}`,
+    params,
+  })
+}
+
+// 根据当前排序指标读取对应数值，兼容后端不同字段命名。
 export function getRankingMetricValue(item: RankingItem, metric: RankingMetric) {
   if (metric === 'totalGames') {
     return item.total_games ?? item.game_count ?? item.score ?? 0
@@ -76,6 +91,7 @@ export function getRankingMetricValue(item: RankingItem, metric: RankingMetric) 
   return item.highest_score ?? item.max_score ?? item.score ?? 0
 }
 
+// 从多种可能的昵称字段中读取最终展示昵称。
 export function getRankingNickname(item: RankingItem) {
   const candidates = [
     item.nickname,
@@ -91,6 +107,7 @@ export function getRankingNickname(item: RankingItem) {
   return candidates.find((value) => typeof value === 'string' && value.trim())?.trim() ?? ''
 }
 
+// 用另一个榜单的昵称数据补齐当前榜单缺失的昵称。
 export function mergeRankingNicknames(items: RankingItem[], nicknameSource: RankingItem[]) {
   const nicknameMap = new Map<number, string>()
 
@@ -109,12 +126,10 @@ export function mergeRankingNicknames(items: RankingItem[], nicknameSource: Rank
   })
 }
 
+// 获取总排行榜数据。
 export async function getTotalRanking(limit = 10) {
   const endpoint = '/api/ranking/total'
-  console.log('[ranking] request start', {
-    url: `${API_BASE_URL}${endpoint}`,
-    params: { limit },
-  })
+  logRankingRequest(endpoint, { limit })
 
   const { data } = await rankingClient.get<RankingPayload>('/api/ranking/total', {
     params: { limit },
@@ -126,12 +141,10 @@ export async function getTotalRanking(limit = 10) {
   return rankings
 }
 
+// 获取日排行榜数据，可按日期和数量过滤。
 export async function getDailyRanking({ date, limit = 10 }: { date?: string; limit?: number } = {}) {
   const endpoint = '/api/ranking/daily'
-  console.log('[ranking] request start', {
-    url: `${API_BASE_URL}${endpoint}`,
-    params: { date, limit },
-  })
+  logRankingRequest(endpoint, { date, limit })
 
   const { data } = await rankingClient.get<RankingPayload>(endpoint, {
     params: { date, limit },
