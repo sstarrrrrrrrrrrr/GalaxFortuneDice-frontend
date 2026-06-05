@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { NavigationNoticeDialog } from '@/components/NavigationNoticeDialog'
+import { useBrowserBackGuard } from '@/hooks/useBrowserBackGuard'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { createMatchSnapshotFromState, getFinalScores, getMatchState, readMatchSnapshot, rollDice, selectScore, storeMatchResult, type MatchEndedResult, type MatchSnapshot, type SelectableScore } from '@/services/match'
@@ -121,6 +123,7 @@ export default function GamePage() {
   const [hasRolledThisTurn, setHasRolledThisTurn] = useState(false)
   const [autoRollHintSeconds, setAutoRollHintSeconds] = useState(TURN_SECONDS)
   const [isGameEnded, setIsGameEnded] = useState(false)
+  const [showExitNotice, setShowExitNotice] = useState(false)
   const rollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const remoteRollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoRollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -143,6 +146,7 @@ export default function GamePage() {
   const isCurrentUserTurn = isCurrentPlayerTurn(currentUserId, currentPlayer)
   const currentUserIdRef = useRef(currentUserId)
   const hasRolledThisTurnRef = useRef(hasRolledThisTurn)
+  const navigateAfterBackGuard = useBrowserBackGuard(() => setShowExitNotice(true))
 
   const visiblePlayers = useMemo(() => getVisiblePlayers(displayPlayers, mode.maxPlayers), [displayPlayers, mode.maxPlayers])
   const selectableScoreMap = useMemo(
@@ -187,7 +191,7 @@ export default function GamePage() {
             winner: fallback.winner,
             endedAt: Date.now(),
           })
-          router.replace(resultRoute)
+          navigateAfterBackGuard(() => router.replace(resultRoute))
         })
         .catch((error) => {
           if (process.env.NODE_ENV === 'development') {
@@ -200,10 +204,10 @@ export default function GamePage() {
             winner: fallback.winner,
             endedAt: Date.now(),
           })
-          router.replace(resultRoute)
+          navigateAfterBackGuard(() => router.replace(resultRoute))
         })
     },
-    [matchId, resultRoute, router, totalScores],
+    [matchId, navigateAfterBackGuard, resultRoute, router, totalScores],
   )
 
   // 从后端刷新对局状态，并同步骰子、剩余投掷次数和可选分数。
@@ -808,6 +812,13 @@ export default function GamePage() {
         isRolling={isRolling}
         rollsLeft={rollsLeft}
         onRoll={handleRoll}
+      />
+
+      <NavigationNoticeDialog
+        open={showExitNotice}
+        title="暂时无法退出"
+        message="你当前处于对局中，不可退出。请完成本局游戏后再离开。"
+        onClose={() => setShowExitNotice(false)}
       />
     </div>
   )

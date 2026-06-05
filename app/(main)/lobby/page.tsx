@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { createRoom, joinRoom } from '@/services/room'
 import { LobbyView, type LobbyStats } from './components/LobbyView'
@@ -16,6 +16,41 @@ export default function LobbyPage() {
   const [roomIdInput, setRoomIdInput] = useState('')
   const [roomMessage, setRoomMessage] = useState('')
   const [pendingRoomAction, setPendingRoomAction] = useState('')
+  const roomMessageTimerRef = useRef<number | null>(null)
+
+  const clearRoomMessage = useCallback(() => {
+    if (roomMessageTimerRef.current) {
+      window.clearTimeout(roomMessageTimerRef.current)
+      roomMessageTimerRef.current = null
+    }
+
+    setRoomMessage('')
+  }, [])
+
+  const showRoomMessage = useCallback((message: string) => {
+    if (roomMessageTimerRef.current) {
+      window.clearTimeout(roomMessageTimerRef.current)
+    }
+
+    setRoomMessage(message)
+    roomMessageTimerRef.current = window.setTimeout(() => {
+      roomMessageTimerRef.current = null
+      setRoomMessage('')
+    }, 2200)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (roomMessageTimerRef.current) {
+        window.clearTimeout(roomMessageTimerRef.current)
+      }
+    }
+  }, [])
+
+  function handleRoomIdInputChange(value: string) {
+    setRoomIdInput(value)
+    clearRoomMessage()
+  }
 
   const accountExp = currentUser?.exp ?? 0
   const levelBaseExp = 200
@@ -48,7 +83,7 @@ export default function LobbyPage() {
     }
 
     try {
-      setRoomMessage('')
+      clearRoomMessage()
       setPendingRoomAction(modeKey)
 
       if (isGuest) {
@@ -75,7 +110,7 @@ export default function LobbyPage() {
         `/room/${encodeURIComponent(String(room.room_id))}?mode=${encodeURIComponent(gameMode)}&maxPlayers=${maxPlayers}&role=host&creatorId=${room.creator_id}&roomStatus=${room.room_status}`,
       )
     } catch (error) {
-      setRoomMessage(error instanceof Error && error.message ? error.message : '创建房间失败，请稍后重试')
+      showRoomMessage(error instanceof Error && error.message ? error.message : '创建房间失败，请稍后重试')
     } finally {
       setPendingRoomAction('')
     }
@@ -87,17 +122,17 @@ export default function LobbyPage() {
 
     const roomId = roomIdInput.trim()
     if (!roomId) {
-      setRoomMessage('请输入房间号')
+      showRoomMessage('请输入房间号')
       return
     }
     const numericRoomId = Number(roomId)
     if (!Number.isInteger(numericRoomId) || numericRoomId <= 0) {
-      setRoomMessage('房间号格式不正确')
+      showRoomMessage('房间号格式不正确')
       return
     }
 
     try {
-      setRoomMessage('')
+      clearRoomMessage()
       setPendingRoomAction('join')
 
       if (isGuest) {
@@ -122,7 +157,7 @@ export default function LobbyPage() {
         `/room/${encodeURIComponent(String(room.room_id))}?mode=${encodeURIComponent(gameMode)}&maxPlayers=${maxPlayers}&role=player&creatorId=${room.creator_id ?? room.owner_id ?? ''}&roomStatus=${room.room_status ?? ''}`,
       )
     } catch (error) {
-      setRoomMessage(error instanceof Error && error.message ? error.message : '加入房间失败，请检查房间号')
+      showRoomMessage(error instanceof Error && error.message ? error.message : '加入房间失败，请检查房间号')
     } finally {
       setPendingRoomAction('')
     }
@@ -131,7 +166,7 @@ export default function LobbyPage() {
   return (
     <LobbyView
       roomIdInput={roomIdInput}
-      onRoomIdInputChange={setRoomIdInput}
+      onRoomIdInputChange={handleRoomIdInputChange}
       onJoinRoom={handleJoinRoom}
       onCreateRoom={handleCreateRoom}
       onQuickAction={(href) => router.push(href)}

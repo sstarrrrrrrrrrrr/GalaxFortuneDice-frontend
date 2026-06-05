@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useBrowserBackGuard } from '@/hooks/useBrowserBackGuard'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useLatestRef } from '@/hooks/useLatestRef'
 import { AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
@@ -98,6 +99,23 @@ export default function RoomPage() {
   const placeholderPlayerId = isHostView ? 1 : 2
   const localPlayerStateId = players.some((player) => player.id === currentPlayerId) ? currentPlayerId : placeholderPlayerId
   const isCreator = Boolean(creatorId && currentPlayerId === creatorId)
+  const navigateAfterBackGuard = useBrowserBackGuard(() => {
+    if (isLeavingRoom || roomDialog) return
+
+    setRoomDialog({
+      title: isCreator ? '房主离开提醒' : '退出房间',
+      message: isCreator
+        ? '你是当前房间的房主，离开后房间将自动解散。确定离开吗？'
+        : '退出后将离开当前房间，确定退出吗？',
+      confirmText: '确认退出',
+      cancelText: '取消',
+      tone: 'danger',
+      onConfirm: () => {
+        setRoomDialog(null)
+        void executeLeaveRoom()
+      },
+    })
+  })
   const displayPlayers = useMemo(
     () => buildDisplayRoomPlayers({
       players,
@@ -170,9 +188,9 @@ export default function RoomPage() {
       message: '房主已离开当前房间，房间将自动解散。',
       confirmText: '返回大厅',
       tone: 'info',
-      onConfirm: () => router.push('/lobby'),
+      onConfirm: () => navigateAfterBackGuard(() => router.replace('/lobby')),
     })
-  }, [router])
+  }, [navigateAfterBackGuard, router])
 
   // 收到开局信息后写入对局快照，并携带模式/身份参数进入 VS 过场页。
   const enterMatch = useCallback(
@@ -191,9 +209,11 @@ export default function RoomPage() {
           }))
 
       storeMatchSnapshot({ ...match, match_info: matchInfo }, apiRoomId)
-      router.push(`/game/${encodeURIComponent(String(match.match_id))}/vs?mode=${modeKey}&role=${isCreator ? 'host' : 'player'}${isGuestView ? '&guest=true' : ''}`)
+      navigateAfterBackGuard(() => {
+        router.replace(`/game/${encodeURIComponent(String(match.match_id))}/vs?mode=${modeKey}&role=${isCreator ? 'host' : 'player'}${isGuestView ? '&guest=true' : ''}`)
+      })
     },
-    [apiRoomId, isCreator, isGuestView, modeKey, playersRef, router],
+    [apiRoomId, isCreator, isGuestView, modeKey, navigateAfterBackGuard, playersRef, router],
   )
 
   useEffect(() => {
@@ -283,7 +303,9 @@ export default function RoomPage() {
       }
 
       if (isGuestView) {
-        router.push(`/game/match-001/vs?mode=${modeKey}&guest=true`)
+        navigateAfterBackGuard(() => {
+          router.replace(`/game/match-001/vs?mode=${modeKey}&guest=true`)
+        })
         return
       }
 
@@ -359,7 +381,7 @@ export default function RoomPage() {
 
     // 游客房间没有后端离房状态，直接回到游客大厅。
     if (isGuestView) {
-      router.push('/lobby?mode=guest')
+      navigateAfterBackGuard(() => router.replace('/lobby?mode=guest'))
       return
     }
 
@@ -369,7 +391,7 @@ export default function RoomPage() {
         room_id: apiRoomId,
         user_id: currentPlayerId,
       })
-      router.push('/lobby')
+      navigateAfterBackGuard(() => router.replace('/lobby'))
     } catch (error) {
       showNotice(error instanceof Error && error.message ? error.message : '离开房间失败')
     } finally {

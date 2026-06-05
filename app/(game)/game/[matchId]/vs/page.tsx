@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { NavigationNoticeDialog } from '@/components/NavigationNoticeDialog'
+import { useBrowserBackGuard } from '@/hooks/useBrowserBackGuard'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { readMatchSnapshot, startMatch } from '@/services/match'
 import { connectMatchChannel } from '@/websocket/match'
@@ -30,10 +32,12 @@ export default function VsLoadingPage() {
   const mode = modeConfig[modeKey] ?? modeConfig['solo-2p']
   const [phase, setPhase] = useState<'enter' | 'ready'>('enter')
   const [barrages, setBarrages] = useState<Barrage[]>([])
+  const [showExitNotice, setShowExitNotice] = useState(false)
   const [matchPlayers] = useState<Player[]>(() => readMatchSnapshot(matchId)?.players.map(normalizeMatchPlayer) ?? [])
   const barrageIdRef = useRef(0)
   const hasStartedMatchRef = useRef(false)
   const displayPlayers = useMemo(() => buildVsDisplayPlayers(matchPlayers, currentUser), [currentUser, matchPlayers])
+  const navigateAfterBackGuard = useBrowserBackGuard(() => setShowExitNotice(true))
 
   useEffect(() => {
     if (!matchId || isGuestView) return
@@ -63,14 +67,16 @@ export default function VsLoadingPage() {
   useEffect(() => {
     const readyTimer = window.setTimeout(() => setPhase('ready'), 900)
     const redirectTimer = window.setTimeout(() => {
-      router.push(`/game/${matchId}?mode=${modeKey}&role=${isHostView ? 'host' : 'player'}${isGuestView ? '&guest=true' : ''}`)
+      navigateAfterBackGuard(() => {
+        router.replace(`/game/${matchId}?mode=${modeKey}&role=${isHostView ? 'host' : 'player'}${isGuestView ? '&guest=true' : ''}`)
+      })
     }, 5200)
 
     return () => {
       window.clearTimeout(readyTimer)
       window.clearTimeout(redirectTimer)
     }
-  }, [isGuestView, isHostView, matchId, modeKey, router])
+  }, [isGuestView, isHostView, matchId, modeKey, navigateAfterBackGuard, router])
 
   // 添加一条临时弹幕，并在动画结束后从状态中移除。
   function sendBarrage(text: string) {
@@ -84,13 +90,21 @@ export default function VsLoadingPage() {
   }
 
   return (
-    <VsView
-      modeName={mode.name}
-      layout={mode.layout}
-      phase={phase}
-      players={displayPlayers}
-      barrages={barrages}
-      onSendBarrage={sendBarrage}
-    />
+    <>
+      <VsView
+        modeName={mode.name}
+        layout={mode.layout}
+        phase={phase}
+        players={displayPlayers}
+        barrages={barrages}
+        onSendBarrage={sendBarrage}
+      />
+      <NavigationNoticeDialog
+        open={showExitNotice}
+        title="暂时无法退出"
+        message="你当前处于对局中，不可退出。请完成本局游戏后再离开。"
+        onClose={() => setShowExitNotice(false)}
+      />
+    </>
   )
 }

@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export const API_BASE_URL = 'http://192.168.21.24:8001'
+export const API_BASE_URL = 'http://192.168.1.137:8001'
 export const AUTH_TOKEN_STORAGE_KEY = 'galax_auth_token'
 
 interface ApiClientOptions {
