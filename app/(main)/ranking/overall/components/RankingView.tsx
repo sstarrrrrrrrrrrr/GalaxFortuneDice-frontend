@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { type CSSProperties } from 'react'
-import { CalendarDays, ChevronDown, Dice5, Info, Mail, Settings, Star, Trophy, Users } from 'lucide-react'
+import { CalendarDays, Dice5, Info, Mail, Settings, Star, Trophy, Users } from 'lucide-react'
 import {
   getRankingMetricValue,
   getRankingNickname,
@@ -258,6 +258,7 @@ function RankingTable({
               key={`${scope}-${metric}-${item.user_id}`}
               item={item}
               rank={index + 1}
+              metric={metric}
             />
           ))
         )}
@@ -279,7 +280,6 @@ function RankingColumnHead({
   return (
     <span className={`${styles.columnHead} ${metric === targetMetric ? styles.sortedHead : ''}`}>
       {label}
-      {metric === targetMetric ? <ChevronDown size={15} /> : null}
     </span>
   )
 }
@@ -300,8 +300,18 @@ function RankingEmptyRow({ text }: { text: string }) {
 }
 
 // 渲染排行榜中的单个玩家数据行。
-function RankingTableRow({ item, rank }: { item: RankingItem; rank: number }) {
+function RankingTableRow({
+  item,
+  rank,
+  metric,
+}: {
+  item: RankingItem
+  rank: number
+  metric: RankingMetric
+}) {
   const level = getRankingLevel(item)
+  const metricClassName = (targetMetric: RankingMetric) =>
+    `${styles.metricNumber} ${metric === targetMetric ? styles.goldNumber : styles.normalNumber}`
 
   return (
     <div className={styles.tableRow}>
@@ -327,9 +337,9 @@ function RankingTableRow({ item, rank }: { item: RankingItem; rank: number }) {
           {level ? <span className={styles.level}>Lv.{level}</span> : null}
         </span>
       </span>
-      <span className={styles.goldNumber}>{formatNumber(getRankingMetricValue(item, 'wins'))}</span>
-      <span className={styles.normalNumber}>{formatNumber(getRankingMetricValue(item, 'totalGames'))}</span>
-      <span className={styles.goldNumber}>{formatNumber(getRankingMetricValue(item, 'highestScore'))}</span>
+      <span className={metricClassName('wins')}>{formatNumber(getRankingMetricValue(item, 'wins'))}</span>
+      <span className={metricClassName('totalGames')}>{formatNumber(getRankingMetricValue(item, 'totalGames'))}</span>
+      <span className={metricClassName('highestScore')}>{formatNumber(getRankingMetricValue(item, 'highestScore'))}</span>
     </div>
   )
 }
