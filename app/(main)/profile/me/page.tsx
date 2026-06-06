@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { UserRound } from 'lucide-react'
+import { PageExitButton } from '@/components/PageExitButton'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { DEFAULT_AVATAR_SRC } from '@/utils/avatar'
 
@@ -13,7 +14,9 @@ export default function ProfilePage() {
   const exp = currentUser?.exp ?? 0
 
   return (
-    <main className="min-h-screen bg-[#05072c] px-6 py-8 text-white">
+    <main className="relative min-h-screen bg-[#05072c] px-6 py-8 text-white">
+      <PageExitButton className="absolute left-6 top-6 z-10" />
+
       <section className="mx-auto max-w-3xl overflow-hidden rounded-[14px] border border-white/14 bg-[#071052]/70 shadow-[0_18px_36px_rgba(2,5,42,0.34)] backdrop-blur-[12px]">
         <div className="flex items-center gap-4 border-b border-white/10 px-6 py-5">
           <UserRound className="h-6 w-6 text-[#ffd84d]" />

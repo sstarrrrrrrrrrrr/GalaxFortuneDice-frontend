@@ -154,6 +154,12 @@
   height: 12%;
 }
 
+.backAction {
+  position: absolute;
+  top: 2.5vh;
+  left: 2vw;
+}
+
 .actions {
   position: absolute;
   top: 2.5vh;

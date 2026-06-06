@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { type CSSProperties } from 'react'
 import { CalendarDays, Dice5, Info, Mail, Settings, Star, Trophy, Users } from 'lucide-react'
+import { PageExitButton } from '@/components/PageExitButton'
 import {
   getRankingMetricValue,
   getRankingNickname,
@@ -180,6 +181,10 @@ function RankingSidebar({
 function RankingTopbar() {
   return (
     <header className={styles.topbar}>
+      <div className={styles.backAction}>
+        <PageExitButton />
+      </div>
+
       <div className={styles.actions} aria-label="顶部操作">
         <button className={styles.iconButton} type="button" aria-label="消息">
           <Mail />

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 const publicRoutes = ['/login']
-const protectedRoutes = ['/lobby', '/room', '/game', '/ranking', '/profile', '/settings', '/spectator']
+const protectedRoutes = ['/lobby', '/room', '/game', '/ranking', '/profile', '/settings']
 
 function exactPath(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`)
@@ -40,5 +40,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/login', '/lobby/:path*', '/room/:path*', '/game/:path*', '/ranking/:path*', '/profile/:path*', '/settings/:path*', '/spectator/:path*'],
+  matcher: ['/', '/login', '/lobby/:path*', '/room/:path*', '/game/:path*', '/ranking/:path*', '/profile/:path*', '/settings/:path*'],
 }
