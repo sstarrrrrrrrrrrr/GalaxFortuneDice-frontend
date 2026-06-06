@@ -1,5 +1,26 @@
 import { API_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
 
+const activeSockets = new Set<WebSocket>()
+
+export function registerActiveSocket(socket: WebSocket) {
+  activeSockets.add(socket)
+
+  const unregister = () => activeSockets.delete(socket)
+  socket.addEventListener('close', unregister, { once: true })
+
+  return unregister
+}
+
+export function closeAllWebSockets() {
+  for (const socket of activeSockets) {
+    if (socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
+      socket.close()
+    }
+  }
+
+  activeSockets.clear()
+}
+
 // 从 localStorage 读取 WebSocket 鉴权 token。
 export function readStoredAuthToken() {
   if (typeof window === 'undefined') return ''

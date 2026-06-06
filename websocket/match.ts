@@ -1,4 +1,4 @@
-import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, warnSocketDebug } from './shared'
+import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, registerActiveSocket, warnSocketDebug } from './shared'
 
 export interface MatchChannelEvent {
   rawType?: string
@@ -57,6 +57,7 @@ export function connectMatchChannel({
   onClose,
 }: ConnectMatchChannelOptions) {
   const socket = new WebSocket(buildMatchSocketUrl(matchId, authToken))
+  const unregisterSocket = registerActiveSocket(socket)
   let disposed = false
 
   socket.addEventListener('open', () => {
@@ -92,6 +93,7 @@ export function connectMatchChannel({
 
   return () => {
     disposed = true
+    unregisterSocket()
 
     if (socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
       socket.close()

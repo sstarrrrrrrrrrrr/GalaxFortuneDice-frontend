@@ -15,14 +15,22 @@ export function proxy(request: NextRequest) {
   const devBypass = process.env.NODE_ENV === 'development' && request.nextUrl.searchParams.get('dev') === 'true'
 
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    if (!token && !devBypass) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    return NextResponse.redirect(new URL(guestMode ? '/lobby?mode=guest' : '/lobby', request.url))
   }
 
   if (publicRoutes.some((route) => exactPath(pathname, route))) {
+    if (token) {
+      return NextResponse.redirect(new URL(guestMode ? '/lobby?mode=guest' : '/lobby', request.url))
+    }
+
     return NextResponse.next()
   }
 
-  if (protectedRoutes.some((route) => exactPath(pathname, route)) && !token && !guestMode && !devBypass) {
+  if (protectedRoutes.some((route) => exactPath(pathname, route)) && !token && !devBypass) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)

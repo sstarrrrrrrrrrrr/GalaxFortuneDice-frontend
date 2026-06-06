@@ -1,8 +1,12 @@
+'use client'
+
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import {
   ChevronRight,
   Dice5,
+  LogOut,
   Mail,
   Package,
   Settings,
@@ -13,6 +17,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
+import { ConfirmationDialog } from '@/components/ConfirmationDialog'
 
 export interface LobbyStats {
   highestScore: string
@@ -35,6 +40,7 @@ interface LobbyViewProps {
   playerExp: string
   playerExpPercent: number
   stats: LobbyStats
+  onLogout: () => void
 }
 
 interface ModeOption {
@@ -111,7 +117,11 @@ export function LobbyView({
   playerExp,
   playerExpPercent,
   stats,
+  onLogout,
 }: LobbyViewProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+
   return (
     <main className="relative h-screen min-h-[620px] w-screen min-w-[1080px] overflow-hidden bg-[#03072c] text-white">
       <Image src="/images/homepage-bg.png" alt="" fill priority sizes="100vw" className="object-cover" />
@@ -123,6 +133,12 @@ export function LobbyView({
         onRoomIdInputChange={onRoomIdInputChange}
         onJoinRoom={onJoinRoom}
         isJoining={pendingRoomAction === 'join'}
+        isSettingsOpen={isSettingsOpen}
+        onToggleSettings={() => setIsSettingsOpen((open) => !open)}
+        onRequestLogout={() => {
+          setIsSettingsOpen(false)
+          setIsLogoutDialogOpen(true)
+        }}
       />
 
       <ProfileStatsPanel
@@ -145,6 +161,20 @@ export function LobbyView({
         playerExp={playerExp}
         playerExpPercent={playerExpPercent}
       />
+
+      {isLogoutDialogOpen && (
+        <ConfirmationDialog
+          dialog={{
+            title: '退出登录',
+            message: '退出后将清除当前登录信息，并返回登录页面。确定要退出登录吗？',
+            confirmText: '确认退出',
+            cancelText: '取消',
+            tone: 'danger',
+            onConfirm: onLogout,
+          }}
+          onCancel={() => setIsLogoutDialogOpen(false)}
+        />
+      )}
     </main>
   )
 }
@@ -155,11 +185,17 @@ function LobbyHeader({
   onRoomIdInputChange,
   onJoinRoom,
   isJoining,
+  isSettingsOpen,
+  onToggleSettings,
+  onRequestLogout,
 }: {
   roomIdInput: string
   onRoomIdInputChange: (value: string) => void
   onJoinRoom: () => void
   isJoining: boolean
+  isSettingsOpen: boolean
+  onToggleSettings: () => void
+  onRequestLogout: () => void
 }) {
   return (
     <header className="absolute left-[2.1%] right-[2.8%] top-[2.6%] z-30 flex items-start justify-between">
@@ -205,9 +241,23 @@ function LobbyHeader({
           <IconButton label="好友">
             <Users />
           </IconButton>
-          <IconButton label="设置">
-            <Settings />
-          </IconButton>
+          <div className="relative">
+            <IconButton label="设置" onClick={onToggleSettings}>
+              <Settings />
+            </IconButton>
+            {isSettingsOpen && (
+              <div className="absolute right-0 top-[70px] w-[180px] rounded-[12px] border border-white/18 bg-[#071052]/92 p-2 shadow-[0_18px_40px_rgba(1,4,31,0.48),0_0_22px_rgba(69,93,255,0.28)] backdrop-blur-[14px]">
+                <button
+                  type="button"
+                  onClick={onRequestLogout}
+                  className="flex w-full items-center gap-3 rounded-[9px] border border-transparent px-4 py-3 text-left text-[14px] font-black text-white/92 transition hover:border-[#ff8bc8]/50 hover:bg-[#8b3dbe]/28 hover:text-white"
+                >
+                  <LogOut className="h-5 w-5 text-[#ff9bd2]" />
+                  退出登录
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
@@ -408,11 +458,20 @@ function PlayerSummary({
 }
 
 // 渲染顶部圆形图标按钮。
-function IconButton({ label, children }: { label: string; children: ReactNode }) {
+function IconButton({
+  label,
+  children,
+  onClick,
+}: {
+  label: string
+  children: ReactNode
+  onClick?: () => void
+}) {
   return (
     <button
       type="button"
       aria-label={label}
+      onClick={onClick}
       className="relative grid h-[58px] w-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(62,124,255,0.52)] bg-[rgba(4,12,58,0.7)] text-white shadow-[0_0_13px_rgba(39,98,255,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] transition-[transform,box-shadow,background] duration-300 ease-out hover:-translate-y-px hover:bg-[rgba(29,75,190,0.65)] hover:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:-translate-y-px focus-visible:bg-[rgba(29,75,190,0.65)] focus-visible:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 [&_svg]:h-[52%] [&_svg]:w-[52%] [&_svg]:stroke-[2.2]"
     >
       {children}

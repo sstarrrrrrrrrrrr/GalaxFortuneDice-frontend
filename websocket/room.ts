@@ -1,5 +1,5 @@
 import { normalizeAvatarSrc } from '@/utils/avatar'
-import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, warnSocketDebug } from './shared'
+import { buildSocketUrl, logSocketDebug, readSocketMessageData, redactSocketUrl, registerActiveSocket, warnSocketDebug } from './shared'
 
 export type RoomMessageTone = 'green' | 'cyan' | 'pink' | 'gold'
 
@@ -520,6 +520,7 @@ export function connectRoomChannel({
   onClose,
 }: ConnectRoomChannelOptions) {
   const socket = new WebSocket(buildRoomSocketUrl(roomId, authToken))
+  const unregisterSocket = registerActiveSocket(socket)
   let disposed = false
 
   socket.addEventListener('open', () => {
@@ -558,6 +559,7 @@ export function connectRoomChannel({
 
   return () => {
     disposed = true
+    unregisterSocket()
 
     if (socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
       socket.close()

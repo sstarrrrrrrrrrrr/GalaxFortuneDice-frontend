@@ -2,8 +2,15 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
-import { createRoom, joinRoom } from '@/services/room'
+import { useAuthSessionStore, useCurrentUser } from '@/hooks/useCurrentUser'
+import { MATCH_RESULT_STORAGE_PREFIX, MATCH_SNAPSHOT_STORAGE_PREFIX } from '@/services/match'
+import {
+  createRoom,
+  joinRoom,
+  ROOM_AUTH_TOKEN_STORAGE_PREFIX,
+  ROOM_SNAPSHOT_STORAGE_PREFIX,
+} from '@/services/room'
+import { closeAllWebSockets } from '@/websocket/shared'
 import { LobbyView, type LobbyStats } from './components/LobbyView'
 import { apiGameModeRouteMap, roomModeConfig, storeRoomSession } from './utils/room'
 
@@ -13,6 +20,7 @@ export default function LobbyPage() {
   const searchParams = useSearchParams()
   const isGuest = searchParams.get('mode') === 'guest'
   const currentUser = useCurrentUser()
+  const clearSession = useAuthSessionStore((state) => state.clearSession)
   const [roomIdInput, setRoomIdInput] = useState('')
   const [roomMessage, setRoomMessage] = useState('')
   const [pendingRoomAction, setPendingRoomAction] = useState('')
@@ -50,6 +58,30 @@ export default function LobbyPage() {
   function handleRoomIdInputChange(value: string) {
     setRoomIdInput(value)
     clearRoomMessage()
+  }
+
+  function handleLogout() {
+    closeAllWebSockets()
+    clearSession()
+
+    const sessionPrefixes = [
+      ROOM_SNAPSHOT_STORAGE_PREFIX,
+      ROOM_AUTH_TOKEN_STORAGE_PREFIX,
+      MATCH_SNAPSHOT_STORAGE_PREFIX,
+      MATCH_RESULT_STORAGE_PREFIX,
+    ]
+
+    for (let index = window.sessionStorage.length - 1; index >= 0; index -= 1) {
+      const key = window.sessionStorage.key(index)
+      if (key && sessionPrefixes.some((prefix) => key.startsWith(prefix))) {
+        window.sessionStorage.removeItem(key)
+      }
+    }
+
+    document.cookie = 'guest_mode=; path=/; max-age=0; sameSite=lax'
+    document.cookie = 'token=; path=/; max-age=0; sameSite=lax'
+    router.replace('/login')
+    router.refresh()
   }
 
   const accountExp = currentUser?.exp ?? 0
@@ -178,6 +210,7 @@ export default function LobbyPage() {
       playerExp={playerExp}
       playerExpPercent={playerExpPercent}
       stats={statValues}
+      onLogout={handleLogout}
     />
   )
 }
