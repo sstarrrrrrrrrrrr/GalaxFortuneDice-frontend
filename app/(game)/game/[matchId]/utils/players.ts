@@ -3,6 +3,7 @@ import { normalizeAvatarSrc } from '@/utils/avatar'
 import type { GamePlayer as Player } from '../components/GamePanels'
 
 interface HydratedGameUser {
+  id: number
   nickname?: string
   avatar?: string | null
 }
@@ -26,7 +27,16 @@ export function buildDisplayPlayers(
   hydratedUser: HydratedGameUser | null,
 ) {
   if (matchSnapshot?.players.length) {
-    return matchSnapshot.players.map((player) => normalizeMatchPlayer(player, matchSnapshot.currentTurnUserId))
+    return matchSnapshot.players.map((player) => {
+      const displayPlayer = normalizeMatchPlayer(player, matchSnapshot.currentTurnUserId)
+      if (player.user_id !== hydratedUser?.id) return displayPlayer
+
+      return {
+        ...displayPlayer,
+        name: hydratedUser.nickname ?? displayPlayer.name,
+        avatar: normalizeAvatarSrc(hydratedUser.avatar || displayPlayer.avatar),
+      }
+    })
   }
 
   return fallbackPlayers.map((player) =>

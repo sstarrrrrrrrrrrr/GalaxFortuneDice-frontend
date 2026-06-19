@@ -10,7 +10,7 @@ import { getAuthErrorMessage } from './utils/auth'
 // 登录页容器，管理登录/注册/游客入口状态和认证接口提交流程。
 export default function LoginPage() {
   const router = useRouter()
-  const setSession = useAuthSessionStore((state) => state.setSession)
+  const setToken = useAuthSessionStore((state) => state.setToken)
   const clearSession = useAuthSessionStore((state) => state.clearSession)
   const [view, setView] = useState<AuthView>('login')
   const [showPassword, setShowPassword] = useState(false)
@@ -47,13 +47,11 @@ export default function LoginPage() {
         phone: phone.trim(),
         password,
       })
-      const {
-        data: { token, user_info: userInfo },
-      } = response
+      const { token } = response.data
 
       document.cookie = 'guest_mode=; path=/; max-age=0'
       document.cookie = `token=${encodeURIComponent(token)}; path=/; max-age=86400; sameSite=lax`
-      setSession(userInfo, token)
+      setToken(token)
       router.push('/lobby')
     } catch (error) {
       setAuthMessage(getAuthErrorMessage(error, '登录失败，请检查账号或稍后重试'))
@@ -69,13 +67,11 @@ export default function LoginPage() {
     try {
       setIsGuestLoggingIn(true)
       const response = await loginGuest()
-      const {
-        data: { token, user_info: userInfo },
-      } = response
+      const { token } = response.data
 
       document.cookie = `token=${encodeURIComponent(token)}; path=/; max-age=86400; sameSite=lax`
       document.cookie = 'guest_mode=true; path=/; max-age=86400; sameSite=lax'
-      setSession(userInfo, token)
+      setToken(token)
       router.push('/lobby?mode=guest')
     } catch (error) {
       setAuthMessage(getAuthErrorMessage(error, '游客登录失败，请稍后重试'))

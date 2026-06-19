@@ -36,10 +36,27 @@ export default function OverallRankingPage() {
           console.log('[ranking-page] load start', { scope })
         }
 
-        const nextRankings =
+        const loadedRankings =
           scope === 'daily'
             ? await getDailyRanking({ limit: 10 })
             : mergeRankingNicknames(await getTotalRanking(10), await getDailyRanking({ limit: 50 }))
+        const nextRankings = loadedRankings.map((item) => {
+          if (!currentUser || item.user_id !== currentUser.id) return item
+
+          return {
+            ...item,
+            nickname: currentUser.nickname,
+            avatar: currentUser.avatar,
+            exp: currentUser.exp,
+            ...(scope === 'total'
+              ? {
+                  total_games: currentUser.total_games ?? currentUser.game_count,
+                  total_wins: currentUser.total_wins ?? currentUser.win_count ?? currentUser.wins,
+                  max_score: currentUser.max_score ?? currentUser.highest_score,
+                }
+              : {}),
+          }
+        })
 
         if (!ignore) {
           if (process.env.NODE_ENV === 'development') {
@@ -72,7 +89,7 @@ export default function OverallRankingPage() {
     return () => {
       ignore = true
     }
-  }, [scope])
+  }, [currentUser, scope])
 
   const sortedRankings = useMemo(() => sortRankingsByMetric(rankings, metric), [metric, rankings])
 

@@ -17,6 +17,7 @@ export interface RankingItem {
   game_count?: number
   win_count?: number
   wins?: number
+  total_wins?: number
   highest_score?: number
   max_score?: number
   level?: number
@@ -85,7 +86,7 @@ export function getRankingMetricValue(item: RankingItem, metric: RankingMetric) 
   }
 
   if (metric === 'wins') {
-    return item.win_count ?? item.wins ?? item.score ?? 0
+    return item.total_wins ?? item.win_count ?? item.wins ?? item.score ?? 0
   }
 
   return item.highest_score ?? item.max_score ?? item.score ?? 0

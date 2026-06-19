@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 import { AUTH_TOKEN_STORAGE_KEY } from '@/services/api'
+import { getUserInfo } from '@/services/user'
 import { normalizeAvatarSrc } from '@/utils/avatar'
 
 export interface CurrentUser {
@@ -16,6 +17,7 @@ export interface CurrentUser {
   max_score?: number
   win_count?: number
   wins?: number
+  total_wins?: number
   total_games?: number
   game_count?: number
   win_rate?: number
@@ -28,6 +30,8 @@ interface AuthSessionState {
   token: string
   isHydrated: boolean
   hydrateSession: () => void
+  refreshCurrentUser: () => Promise<void>
+  setToken: (token: string) => void
   setSession: (user: CurrentUser, token: string) => void
   clearSession: () => void
 }
@@ -47,8 +51,9 @@ function normalizeCurrentUser(userInfo: Partial<CurrentUser>) {
     create_time: typeof userInfo.create_time === 'string' ? userInfo.create_time : '',
     highest_score: readNumber(userInfo.highest_score, userInfo.max_score),
     max_score: readNumber(userInfo.max_score, userInfo.highest_score),
-    win_count: readNumber(userInfo.win_count, userInfo.wins),
-    wins: readNumber(userInfo.wins, userInfo.win_count),
+    win_count: readNumber(userInfo.win_count, userInfo.wins, userInfo.total_wins),
+    wins: readNumber(userInfo.wins, userInfo.win_count, userInfo.total_wins),
+    total_wins: readNumber(userInfo.total_wins, userInfo.win_count, userInfo.wins),
     total_games: readNumber(userInfo.total_games, userInfo.game_count),
     game_count: readNumber(userInfo.game_count, userInfo.total_games),
     win_rate: readNumber(userInfo.win_rate),
@@ -91,6 +96,28 @@ export const useAuthSessionStore = create<AuthSessionState>((set, get) => ({
       token: readAuthToken(),
       isHydrated: true,
     })
+  },
+  refreshCurrentUser: async () => {
+    const token = get().token || readAuthToken()
+    if (!token) return
+
+    const userInfo = await getUserInfo(token)
+    const normalizedUser = normalizeCurrentUser(userInfo)
+    if (!normalizedUser) return
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(normalizedUser))
+    }
+
+    set({ user: normalizedUser, token, isHydrated: true })
+  },
+  setToken: (token) => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+      window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
+    }
+
+    set({ user: null, token, isHydrated: true })
   },
   setSession: (user, token) => {
     const normalizedUser = normalizeCurrentUser(user)

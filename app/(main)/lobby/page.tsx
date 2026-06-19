@@ -21,10 +21,26 @@ export default function LobbyPage() {
   const isGuest = searchParams.get('mode') === 'guest'
   const currentUser = useCurrentUser()
   const clearSession = useAuthSessionStore((state) => state.clearSession)
+  const refreshCurrentUser = useAuthSessionStore((state) => state.refreshCurrentUser)
+  const token = useAuthSessionStore((state) => state.token)
+  const isSessionHydrated = useAuthSessionStore((state) => state.isHydrated)
   const [roomIdInput, setRoomIdInput] = useState('')
   const [roomMessage, setRoomMessage] = useState('')
   const [pendingRoomAction, setPendingRoomAction] = useState('')
   const roomMessageTimerRef = useRef<number | null>(null)
+  const hasLoadedUserRef = useRef(false)
+
+  useEffect(() => {
+    if (!isSessionHydrated || !token || hasLoadedUserRef.current) return
+
+    hasLoadedUserRef.current = true
+    void refreshCurrentUser().catch((error) => {
+      hasLoadedUserRef.current = false
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[lobby user info error]', error)
+      }
+    })
+  }, [isSessionHydrated, refreshCurrentUser, token])
 
   const clearRoomMessage = useCallback(() => {
     if (roomMessageTimerRef.current) {
@@ -89,7 +105,7 @@ export default function LobbyPage() {
   const level = Math.floor(accountExp / levelBaseExp) + 1
   const currentLevelExp = accountExp % levelBaseExp
   const highestScore = currentUser?.highest_score ?? currentUser?.max_score ?? 0
-  const winCount = currentUser?.win_count ?? currentUser?.wins ?? 0
+  const winCount = currentUser?.total_wins ?? currentUser?.win_count ?? currentUser?.wins ?? 0
   const totalGames = currentUser?.total_games ?? currentUser?.game_count ?? 0
   const winRate = currentUser?.win_rate ?? (totalGames > 0 ? (winCount / totalGames) * 100 : 0)
   const statValues: LobbyStats = {

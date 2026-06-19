@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   CalendarCheck,
   ChevronRight,
@@ -289,7 +290,7 @@ function ProfileStatsPanel({
   const displayStats = statRows.map((row) => ({ ...row, value: stats[row.key] }))
 
   return (
-    <aside className="absolute left-[3.1%] top-[19.6%] z-20 w-[16vw] min-w-[214px] overflow-hidden rounded-[14px] border border-white/14 bg-[#070b4d]/64 shadow-[0_18px_36px_rgba(2,5,42,0.34)] backdrop-blur-[12px] transition duration-300 hover:-translate-y-[4px] hover:border-white/26 hover:shadow-[0_22px_42px_rgba(2,5,42,0.42),0_0_24px_rgba(111,132,255,0.26)]">
+    <Link href="/profile/me" aria-label="查看个人资料" className="absolute left-[3.1%] top-[19.6%] z-20 block w-[16vw] min-w-[214px] overflow-hidden rounded-[14px] border border-white/14 bg-[#070b4d]/64 shadow-[0_18px_36px_rgba(2,5,42,0.34)] backdrop-blur-[12px] transition duration-300 hover:-translate-y-[4px] hover:border-white/26 hover:shadow-[0_22px_42px_rgba(2,5,42,0.42),0_0_24px_rgba(111,132,255,0.26)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd84d]">
       <div className="flex h-[46px] items-center justify-center border-b border-white/10 bg-white/6 text-[clamp(13px,0.9vw,17px)] font-black">
         个人信息
       </div>
@@ -319,7 +320,7 @@ function ProfileStatsPanel({
           </div>
         ))}
       </div>
-    </aside>
+    </Link>
   )
 }
 

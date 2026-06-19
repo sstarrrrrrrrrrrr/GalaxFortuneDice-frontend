@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getFinalScores, readMatchResult, readMatchSnapshot, storeMatchResult, type MatchEndedSnapshot } from '@/services/match'
 import { normalizeAvatarSrc } from '@/utils/avatar'
 import { ResultView, type ResultPlayer } from './components/ResultView'
@@ -29,6 +30,7 @@ export default function MatchResultPage() {
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
+  const currentUser = useCurrentUser()
   const matchId = params?.matchId as string
   const modeKey = getModeKey(searchParams.get('mode'))
   const roleParam = searchParams.get('role')
@@ -110,8 +112,10 @@ export default function MatchResultPage() {
 
         return {
           id: playerId,
-          name: result.nickname ?? result.name ?? snapshotPlayer?.nickname ?? `玩家 ${index + 1}`,
-          avatar: normalizeAvatarSrc(snapshotPlayer?.avatar),
+          name: currentUser && playerId === currentUser.id
+            ? currentUser.nickname
+            : result.nickname ?? result.name ?? snapshotPlayer?.nickname ?? `玩家 ${index + 1}`,
+          avatar: normalizeAvatarSrc(currentUser && playerId === currentUser.id ? currentUser.avatar : snapshotPlayer?.avatar),
           score: readPlayerScore(result),
           rank: readPlayerRank(result) ?? Number.MAX_SAFE_INTEGER,
           isWinner: readIsWinner(result) || (winnerId !== undefined && playerId === winnerId),
@@ -124,7 +128,7 @@ export default function MatchResultPage() {
         isWinner: player.isWinner || (winnerId === undefined && index === 0) || sortedPlayers.length === 1,
       }))
       .slice(0, Math.min(mode.maxPlayers, 4))
-  }, [matchResult, matchSnapshot, mode.maxPlayers])
+  }, [currentUser, matchResult, matchSnapshot, mode.maxPlayers])
 
   const ceremonyPlayerCount = Math.min(mode.maxPlayers, 4)
   const ceremonySlots = useMemo(

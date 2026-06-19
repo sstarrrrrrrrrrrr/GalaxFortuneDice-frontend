@@ -40,6 +40,15 @@ export function buildDisplayRoomPlayers({
       }
     }
 
+    if (player.id === currentPlayerId && hydratedUser) {
+      return {
+        ...player,
+        name: hydratedUser.nickname ?? player.name,
+        avatar: normalizeAvatarSrc(hydratedUser.avatar || player.avatar),
+        isHost: player.isHost || isHostView || player.id === creatorId,
+      }
+    }
+
     if (player.id === creatorId) {
       return { ...player, isHost: true }
     }

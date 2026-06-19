@@ -13,34 +13,17 @@ export interface LoginRequest {
   password: string
 }
 
-export interface AuthUserInfo {
-  id: number
-  phone: string | null
-  nickname: string
-  avatar: string
-  exp: number
-  create_time: string
-  highest_score?: number
-  max_score?: number
-  win_count?: number
-  wins?: number
-  total_games?: number
-  game_count?: number
-  win_rate?: number
-}
-
 export interface AuthResponse {
   code: number
   msg: string
   data: {
-    user_info: AuthUserInfo
     token: string
   }
 }
 
-// 校验认证接口是否返回 token 和用户信息，异常时抛出后端错误文案。
+// 校验认证接口是否返回 token，完整用户信息由用户信息接口单独获取。
 function ensureAuthSuccess(response: AuthResponse) {
-  if (response.data?.token && response.data.user_info) {
+  if (response.data?.token) {
     return response
   }
 
