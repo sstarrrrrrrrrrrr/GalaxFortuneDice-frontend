@@ -1,0 +1,583 @@
+.drawerRoot {
+  --panel-border: rgba(141, 158, 255, 0.18);
+  --muted: rgba(228, 233, 255, 0.62);
+}
+
+.drawerRoot :global(.ant-drawer-mask) {
+  background: rgba(2, 5, 30, 0.56);
+  backdrop-filter: blur(4px);
+}
+
+.drawer {
+  color: #f7f8ff;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(115, 77, 255, 0.22), transparent 30%),
+    linear-gradient(165deg, rgba(8, 14, 60, 0.98), rgba(4, 9, 42, 0.99));
+  border-left: 1px solid rgba(128, 151, 255, 0.26);
+  box-shadow: -20px 0 60px rgba(1, 4, 31, 0.46);
+}
+
+.drawer :global(.ant-drawer-header) {
+  min-height: 82px;
+  padding: 17px 22px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(15, 24, 91, 0.42);
+  backdrop-filter: blur(18px);
+}
+
+.drawer :global(.ant-drawer-header-title) {
+  flex-direction: row-reverse;
+  gap: 12px;
+}
+
+.drawer :global(.ant-drawer-close) {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.drawer :global(.ant-drawer-close:hover) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.drawer :global(.ant-drawer-body) {
+  padding: 0;
+}
+
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 20px 20px 32px;
+}
+
+.drawerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drawerTitleIcon,
+.sectionIcon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #cbd1ff;
+  background: linear-gradient(145deg, rgba(111, 125, 255, 0.32), rgba(139, 83, 255, 0.18));
+  border: 1px solid rgba(156, 169, 255, 0.3);
+}
+
+.drawerTitleIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  box-shadow: 0 0 20px rgba(99, 106, 255, 0.25);
+}
+
+.drawerTitleIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.drawerTitle h2,
+.drawerTitle p,
+.sectionHeading h3,
+.addFriendTitle h3,
+.addFriendTitle p,
+.taskText h4,
+.taskText p,
+.friendProfile h4,
+.friendProfile p {
+  margin: 0;
+}
+
+.drawerTitle h2 {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.drawerTitle p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.glassCard,
+.taskCard,
+.friendCard {
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  background: rgba(17, 27, 94, 0.62);
+  box-shadow: 0 12px 28px rgba(1, 4, 31, 0.18);
+}
+
+.glassCard :global(.ant-card-body) {
+  padding: 18px;
+}
+
+.overviewCard {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(82, 95, 226, 0.34), rgba(32, 25, 113, 0.56)),
+    rgba(17, 27, 94, 0.72);
+}
+
+.overviewCard::after {
+  position: absolute;
+  top: -45px;
+  right: -35px;
+  width: 140px;
+  height: 140px;
+  content: '';
+  background: radial-gradient(circle, rgba(201, 91, 255, 0.2), transparent 66%);
+}
+
+.overviewHeader,
+.overviewFooter,
+.taskTop,
+.taskProgress,
+.sectionHeading,
+.sectionHeading > div,
+.addFriendTitle,
+.friendProfile,
+.friendNameRow,
+.requestActions {
+  display: flex;
+  align-items: center;
+}
+
+.overviewHeader,
+.overviewFooter,
+.taskTop,
+.sectionHeading {
+  justify-content: space-between;
+}
+
+.eyebrow {
+  color: #909cff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.overviewHeader h3 {
+  margin: 3px 0 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.overviewHeader strong {
+  color: #ffd84f;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.overviewFooter {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.overviewFooter :global(.ant-tag) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  border-color: rgba(255, 207, 65, 0.28);
+  background: rgba(255, 199, 38, 0.1);
+  color: #ffe37a;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.sectionHeading > div {
+  gap: 9px;
+}
+
+.sectionIcon {
+  width: 29px;
+  height: 29px;
+  border-radius: 9px;
+}
+
+.sectionIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sectionHeading h3,
+.addFriendTitle h3 {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.sectionCaption,
+.addFriendTitle p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.streakTag {
+  margin: 0;
+  border-color: rgba(255, 199, 61, 0.25);
+  background: rgba(255, 196, 42, 0.09);
+  color: #ffdc68;
+  font-size: 11px;
+}
+
+.signInGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.signInDay {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 84px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 2px;
+  color: rgba(238, 241, 255, 0.72);
+  border: 1px solid rgba(142, 157, 255, 0.15);
+  border-radius: 10px;
+  background: rgba(19, 29, 93, 0.62);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.signInDay:hover {
+  border-color: rgba(148, 163, 255, 0.38);
+  background: rgba(35, 48, 132, 0.64);
+  transform: translateY(-1px);
+}
+
+.signInDay > span:first-child {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.signInDay strong {
+  color: #ffd963;
+  font-size: 11px;
+}
+
+.rewardIcon {
+  display: grid;
+  place-items: center;
+  color: #f3bd3d;
+}
+
+.rewardIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.checkedDay {
+  opacity: 0.62;
+}
+
+.currentDay {
+  color: #fff;
+  border-color: rgba(255, 216, 79, 0.65);
+  background: linear-gradient(160deg, rgba(97, 79, 218, 0.72), rgba(47, 50, 143, 0.76));
+  box-shadow: 0 0 18px rgba(112, 105, 255, 0.2);
+}
+
+.specialDay {
+  background: linear-gradient(160deg, rgba(93, 62, 188, 0.62), rgba(36, 39, 123, 0.7));
+}
+
+.checkMark {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  color: #071542;
+  border-radius: 50%;
+  background: #68e9b1;
+}
+
+.checkMark svg {
+  width: 9px;
+  height: 9px;
+  stroke-width: 4;
+}
+
+.primaryButton,
+.claimButton,
+.acceptButton,
+.inviteButton,
+.inputButton {
+  color: #11133f;
+  border: 0;
+  background: linear-gradient(100deg, #ffd24d, #ffea68);
+  box-shadow: 0 7px 18px rgba(255, 193, 40, 0.16);
+  font-weight: 900;
+}
+
+.primaryButton:hover,
+.claimButton:hover,
+.inputButton:hover {
+  color: #11133f !important;
+  background: linear-gradient(100deg, #ffdc67, #fff081) !important;
+}
+
+.taskList,
+.friendList {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.taskCard :global(.ant-card-body),
+.friendCard :global(.ant-card-body) {
+  padding: 13px 14px;
+}
+
+.taskCard {
+  position: relative;
+}
+
+.taskTop {
+  gap: 10px;
+  padding-right: 70px;
+}
+
+.taskText {
+  min-width: 0;
+}
+
+.taskText h4,
+.friendProfile h4 {
+  color: #f8f9ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.taskText p,
+.friendProfile p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.rewardTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  margin: 0;
+  color: #ffdb69;
+  border-color: rgba(255, 212, 78, 0.2);
+  background: rgba(255, 203, 47, 0.08);
+}
+
+.taskProgress {
+  gap: 8px;
+  margin-top: 10px;
+  padding-right: 74px;
+}
+
+.taskProgress :global(.ant-progress) {
+  margin: 0;
+}
+
+.taskProgress span {
+  min-width: 34px;
+  color: rgba(235, 239, 255, 0.7);
+  font-size: 10px;
+  text-align: right;
+}
+
+.taskCard > :global(.ant-card-body) > .claimButton,
+.taskCard > :global(.ant-card-body) > .disabledButton {
+  position: absolute;
+  right: 14px;
+  bottom: 13px;
+  width: 62px;
+}
+
+.disabledButton,
+.secondaryButton {
+  color: rgba(231, 235, 255, 0.55) !important;
+  border-color: rgba(148, 162, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none;
+}
+
+.addFriendCard {
+  background:
+    radial-gradient(circle at 90% 0%, rgba(125, 75, 255, 0.23), transparent 42%),
+    rgba(17, 27, 94, 0.66);
+}
+
+.addFriendTitle {
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.addFriendTitle p {
+  margin-top: 2px;
+}
+
+.friendInput {
+  padding: 4px 5px 4px 12px;
+  color: #fff;
+  border-color: rgba(137, 154, 255, 0.2);
+  background: rgba(4, 9, 48, 0.52);
+  box-shadow: none;
+}
+
+.friendInput:hover,
+.friendInput:focus,
+.friendInput:focus-within {
+  border-color: rgba(136, 151, 255, 0.56);
+  background: rgba(7, 13, 62, 0.7);
+  box-shadow: 0 0 0 2px rgba(103, 113, 255, 0.08);
+}
+
+.friendInput :global(.ant-input) {
+  color: #fff;
+  background: transparent;
+}
+
+.friendInput :global(.ant-input::placeholder) {
+  color: rgba(224, 229, 255, 0.38);
+}
+
+.friendInput :global(.ant-input-prefix) {
+  color: rgba(207, 214, 255, 0.58);
+}
+
+.inputButton {
+  min-width: 54px;
+}
+
+.friendCard :global(.ant-card-body) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.friendProfile {
+  min-width: 0;
+  gap: 11px;
+}
+
+.friendProfile > div:last-child {
+  min-width: 0;
+}
+
+.friendProfile :global(.ant-avatar) {
+  border: 2px solid rgba(151, 164, 255, 0.34);
+  background: #242568;
+}
+
+.friendProfile h4,
+.friendProfile p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friendNameRow {
+  gap: 6px;
+}
+
+.friendNameRow :global(.ant-tag) {
+  margin: 0;
+}
+
+.onlineTag,
+.offlineTag {
+  padding-inline: 6px;
+  font-size: 9px;
+  line-height: 17px;
+}
+
+.onlineTag {
+  color: #78efbd;
+  border-color: rgba(74, 224, 161, 0.2);
+  background: rgba(55, 213, 148, 0.08);
+}
+
+.offlineTag {
+  color: #9ca4c6;
+  border-color: rgba(146, 155, 193, 0.14);
+  background: rgba(144, 152, 188, 0.06);
+}
+
+.requestActions {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.acceptButton,
+.inviteButton {
+  color: #fff;
+  background: linear-gradient(110deg, #687bff, #8c5eff);
+}
+
+.acceptButton:hover,
+.inviteButton:hover {
+  color: #fff !important;
+  background: linear-gradient(110deg, #7b8bff, #9e73ff) !important;
+}
+
+.inviteButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.offlineFriend {
+  opacity: 0.68;
+}
+
+@media (max-width: 520px) {
+  .drawer :global(.ant-drawer-header) {
+    padding: 14px 16px;
+  }
+
+  .drawerContent {
+    gap: 19px;
+    padding: 16px 14px 26px;
+  }
+
+  .signInGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .signInDay {
+    min-height: 76px;
+  }
+
+  .friendCard :global(.ant-card-body) {
+    align-items: flex-start;
+  }
+
+  .friendProfile {
+    max-width: calc(100% - 88px);
+  }
+
+  .requestActions {
+    flex-direction: column;
+  }
+}

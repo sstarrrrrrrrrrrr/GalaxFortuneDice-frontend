@@ -4,10 +4,10 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import Image from 'next/image'
 import {
+  CalendarCheck,
   ChevronRight,
   Dice5,
   LogOut,
-  Mail,
   Package,
   Settings,
   ShoppingBag,
@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { ConfirmationDialog } from '@/components/ConfirmationDialog'
+import { LobbyDrawers } from './LobbyDrawers'
 
 export interface LobbyStats {
   highestScore: string
@@ -121,6 +122,7 @@ export function LobbyView({
 }: LobbyViewProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [activeDrawer, setActiveDrawer] = useState<'tasks' | 'friends' | null>(null)
 
   return (
     <main className="relative h-screen min-h-[620px] w-screen min-w-[1080px] overflow-hidden bg-[#03072c] text-white">
@@ -139,6 +141,8 @@ export function LobbyView({
           setIsSettingsOpen(false)
           setIsLogoutDialogOpen(true)
         }}
+        onOpenTasks={() => setActiveDrawer('tasks')}
+        onOpenFriends={() => setActiveDrawer('friends')}
       />
 
       <ProfileStatsPanel
@@ -161,6 +165,8 @@ export function LobbyView({
         playerExp={playerExp}
         playerExpPercent={playerExpPercent}
       />
+
+      <LobbyDrawers activeDrawer={activeDrawer} onClose={() => setActiveDrawer(null)} />
 
       {isLogoutDialogOpen && (
         <ConfirmationDialog
@@ -188,6 +194,8 @@ function LobbyHeader({
   isSettingsOpen,
   onToggleSettings,
   onRequestLogout,
+  onOpenTasks,
+  onOpenFriends,
 }: {
   roomIdInput: string
   onRoomIdInputChange: (value: string) => void
@@ -196,6 +204,8 @@ function LobbyHeader({
   isSettingsOpen: boolean
   onToggleSettings: () => void
   onRequestLogout: () => void
+  onOpenTasks: () => void
+  onOpenFriends: () => void
 }) {
   return (
     <header className="absolute left-[2.1%] right-[2.8%] top-[2.6%] z-30 flex items-start justify-between">
@@ -235,12 +245,12 @@ function LobbyHeader({
         </div>
 
         <div className="flex items-center gap-[1.15vw]">
-          <IconButton label="邮件">
-            <Mail />
-          </IconButton>
-          <IconButton label="好友">
+          <HeaderActionButton label="签到" onClick={onOpenTasks}>
+            <CalendarCheck />
+          </HeaderActionButton>
+          <HeaderActionButton label="好友" onClick={onOpenFriends} badge>
             <Users />
-          </IconButton>
+          </HeaderActionButton>
           <div className="relative">
             <IconButton label="设置" onClick={onToggleSettings}>
               <Settings />
@@ -475,6 +485,34 @@ function IconButton({
       className="relative grid h-[58px] w-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(62,124,255,0.52)] bg-[rgba(4,12,58,0.7)] text-white shadow-[0_0_13px_rgba(39,98,255,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] transition-[transform,box-shadow,background] duration-300 ease-out hover:-translate-y-px hover:bg-[rgba(29,75,190,0.65)] hover:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:-translate-y-px focus-visible:bg-[rgba(29,75,190,0.65)] focus-visible:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 [&_svg]:h-[52%] [&_svg]:w-[52%] [&_svg]:stroke-[2.2]"
     >
       {children}
+    </button>
+  )
+}
+
+function HeaderActionButton({
+  label,
+  children,
+  onClick,
+  badge = false,
+}: {
+  label: string
+  children: ReactNode
+  onClick: () => void
+  badge?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="group relative grid h-[58px] w-[58px] cursor-pointer place-items-center rounded-full border border-[rgba(62,124,255,0.52)] bg-[rgba(4,12,58,0.7)] text-white shadow-[0_0_13px_rgba(39,98,255,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-[12px] transition-[transform,box-shadow,background,border-color] duration-300 ease-out hover:-translate-y-px hover:border-blue-200/60 hover:bg-[rgba(29,75,190,0.65)] hover:shadow-[0_0_20px_rgba(91,119,255,0.85)] focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 [&_svg]:h-[52%] [&_svg]:w-[52%] [&_svg]:stroke-[2.2]"
+    >
+      {children}
+      {badge && (
+        <span className="absolute right-[-2px] top-[-2px] grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-[#071052] bg-[#ffcf42] px-1 text-[9px] font-black leading-none text-[#11133f]">
+          2
+        </span>
+      )}
     </button>
   )
 }

@@ -1,8 +1,7 @@
 .page {
   --gold: #ffd329;
-  --pink: #ff45e7;
+  --pink: #ff45a8;
   --cyan: #20eeff;
-
   position: relative;
   width: 100vw;
   min-width: 1100px;
@@ -11,9 +10,9 @@
   overflow: hidden;
   color: #fff;
   background:
-    radial-gradient(circle at 14% 67%, rgba(119, 27, 255, 0.26), transparent 16%),
-    radial-gradient(circle at 80% 12%, rgba(28, 96, 255, 0.26), transparent 26%),
-    linear-gradient(150deg, #020929 0%, #061557 43%, #082582 100%);
+    radial-gradient(circle at 74% 12%, rgba(32, 91, 255, 0.28), transparent 28%),
+    radial-gradient(circle at 18% 72%, rgba(99, 34, 255, 0.2), transparent 21%),
+    linear-gradient(145deg, #01072d 0%, #061653 48%, #082881 100%);
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -26,58 +25,57 @@
 }
 
 .page::before {
-  opacity: 0.78;
+  opacity: 0.72;
   background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.68) 0 1px, transparent 1.4px),
-    radial-gradient(circle, rgba(104, 141, 255, 0.82) 0 1px, transparent 1.5px);
-  background-position:
-    18px 8px,
-    86px 48px;
-  background-size:
-    126px 98px,
-    178px 140px;
+    radial-gradient(circle, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(100, 143, 255, 0.78) 0 1px, transparent 1.5px);
+  background-position: 24px 12px, 92px 54px;
+  background-size: 132px 104px, 184px 146px;
 }
 
 .page::after {
   background:
-    linear-gradient(90deg, rgba(1, 8, 47, 0.76) 0 19.4%, transparent 24%),
-    linear-gradient(180deg, rgba(0, 3, 26, 0.16), rgba(0, 0, 18, 0.4));
+    linear-gradient(90deg, rgba(1, 7, 43, 0.84) 0 17.5%, transparent 23%),
+    linear-gradient(180deg, rgba(0, 2, 24, 0.08), rgba(0, 0, 20, 0.36));
 }
 
 .sidebar {
   position: absolute;
   inset: 0 auto 0 0;
   z-index: 1;
-  width: 17.4vw;
-  min-width: 238px;
-  max-width: 286px;
+  width: clamp(230px, 16.5vw, 278px);
+  border-right: 1px solid rgba(59, 119, 255, 0.2);
 }
 
 .logoBlock {
   height: 13%;
-  padding: 3.1vh 0 0 2vw;
+  padding: 3vh 0 0 2vw;
 }
 
 .logoImage {
-  width: 78%;
-  max-width: 246px;
+  width: 76%;
+  max-width: 232px;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 0 13px rgba(95, 126, 255, 0.72));
 }
 
+.sidebarNavigation {
+  margin-top: 1vh;
+}
+
 .sideTitle {
-  margin: 1.8vh 0 2.4vh;
-  padding-left: 1.7vw;
-  font-size: 28px;
+  margin: 0 0 2.3vh;
+  padding-left: 2vw;
+  font-size: 27px;
   font-weight: 900;
   line-height: 1;
 }
 
 .menu {
   display: grid;
-  gap: 2.8vh;
-  padding: 0 1.15vw 0 0.65vw;
+  gap: 2vh;
+  padding: 0 1.2vw;
 }
 
 .menuItem {
@@ -85,20 +83,20 @@
   display: flex;
   align-items: center;
   width: 100%;
-  height: 7vh;
-  min-height: 60px;
-  max-height: 80px;
-  gap: 1vw;
-  padding: 0 1.6vw;
-  color: rgba(255, 255, 255, 0.96);
+  height: 6.6vh;
+  min-height: 56px;
+  max-height: 70px;
+  gap: 0.9vw;
+  padding: 0 1.4vw;
+  color: rgba(255, 255, 255, 0.94);
   font-family: inherit;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
   text-align: left;
   cursor: pointer;
-  background: transparent;
+  background: rgba(4, 15, 69, 0.28);
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 10px;
   transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
 }
 
@@ -108,20 +106,19 @@
 
 .menuItem:hover,
 .menuItemActive {
-  background: linear-gradient(135deg, #7b35ff 0%, #165eff 100%);
-  border-color: rgba(115, 166, 255, 0.62);
-  box-shadow:
-    0 0 24px rgba(82, 99, 255, 0.76),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #7b35ff 0%, #1762ff 100%);
+  border-color: rgba(139, 185, 255, 0.76);
+  box-shadow: 0 0 24px rgba(82, 99, 255, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
 }
 
 .trophyArt {
   position: absolute;
-  left: -1.1vw;
-  right: 0.7vw;
-  bottom: 3.5vh;
-  height: 39vh;
-  min-height: 280px;
+  left: 0;
+  right: 1vw;
+  bottom: 6vh;
+  height: 32vh;
+  min-height: 220px;
   animation: trophyFloat 3.8s ease-in-out infinite;
 }
 
@@ -138,26 +135,50 @@
   }
 
   50% {
-    transform: translateY(-13px);
+    transform: translateY(-10px);
   }
 }
 
 .content {
   position: absolute;
-  inset: 0 0 0 clamp(248px, calc(17.4vw + 8px), 298px);
+  inset: 0 0 0 clamp(238px, calc(16.5vw + 8px), 288px);
   z-index: 1;
 }
 
 .topbar {
   position: absolute;
   inset: 0 0 auto 0;
-  height: 12%;
+  height: 12.5vh;
+  min-height: 94px;
 }
 
-.backAction {
+.titleGroup {
   position: absolute;
-  top: 2.5vh;
-  left: 2vw;
+  top: 2.4vh;
+  left: 1.2vw;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.backButton {
+  height: 48px;
+}
+
+.titleGroup h1 {
+  margin: 0;
+  font-size: clamp(25px, 1.7vw, 34px);
+  font-weight: 1000;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-shadow: 0 0 14px rgba(93, 126, 255, 0.56);
+}
+
+.titleGroup p {
+  margin: 8px 0 0;
+  color: rgba(211, 222, 255, 0.68);
+  font-size: clamp(12px, 0.82vw, 15px);
+  font-weight: 700;
 }
 
 .actions {
@@ -165,86 +186,83 @@
   top: 2.5vh;
   right: 2vw;
   display: flex;
-  gap: 1.15vw;
+  gap: 1vw;
 }
 
 .iconButton {
   position: relative;
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   color: #fff;
   cursor: pointer;
-  background: rgba(4, 12, 58, 0.7);
-  border: 1px solid rgba(62, 124, 255, 0.52);
+  background: rgba(4, 12, 58, 0.72);
+  border: 1px solid rgba(62, 124, 255, 0.56);
   border-radius: 50%;
-  box-shadow:
-    0 0 13px rgba(39, 98, 255, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  box-shadow: 0 0 13px rgba(39, 98, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .iconButton svg {
-  width: 52%;
-  height: 52%;
+  width: 50%;
+  height: 50%;
   stroke-width: 2.2;
 }
 
-.iconButton:hover {
-  background: rgba(29, 75, 190, 0.65);
+.iconButton:hover,
+.iconButton:focus-visible {
+  background: rgba(29, 75, 190, 0.72);
   box-shadow: 0 0 20px rgba(91, 119, 255, 0.85);
+  outline: none;
   transform: translateY(-1px);
 }
 
 .iconButton:focus-visible {
-  background: rgba(29, 75, 190, 0.65);
-  box-shadow: 0 0 20px rgba(91, 119, 255, 0.85);
-  outline: 2px solid rgba(191, 219, 254, 0.7);
-  outline-offset: 2px;
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.72), 0 0 20px rgba(91, 119, 255, 0.85);
 }
 
 .badge {
   position: absolute;
-  top: -3px;
-  right: -2px;
+  top: -4px;
+  right: -3px;
   display: grid;
   place-items: center;
-  width: 31px;
-  height: 31px;
-  font-size: 17px;
+  width: 25px;
+  height: 25px;
+  font-size: 13px;
   font-weight: 900;
-  background: #ff1740;
+  background: #ff1747;
   border-radius: 50%;
 }
 
 .panel {
   position: absolute;
-  top: 11.9vh;
-  right: 0.55vw;
-  bottom: 3.8vh;
-  left: 0;
-  padding: 30px 18px 14px;
-  background: linear-gradient(180deg, rgba(8, 39, 131, 0.62), rgba(5, 25, 92, 0.78));
-  border: 1px solid rgba(45, 123, 255, 0.58);
-  border-radius: 14px;
-  box-shadow:
-    0 0 27px rgba(18, 83, 242, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  top: 12.4vh;
+  right: 1.2vw;
+  bottom: 2.8vh;
+  left: 0.8vw;
+  display: grid;
+  grid-template-rows: 52px minmax(260px, 30fr) minmax(220px, 60fr) 64px;
+  gap: 14px;
+  padding: 18px 16px 12px;
+  background: linear-gradient(180deg, rgba(7, 34, 122, 0.64), rgba(3, 22, 91, 0.8));
+  border: 1px solid rgba(44, 122, 255, 0.66);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(18, 83, 242, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(13px);
 }
 
 .updateTip {
   position: absolute;
-  top: 11px;
-  right: 23px;
+  top: -25px;
+  right: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
+  color: rgba(223, 232, 255, 0.82);
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -254,10 +272,11 @@
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  height: 60px;
-  margin: 0 0 16px;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 14px;
+  width: 100%;
+  height: 52px;
+  margin: 0;
 }
 
 .tab {
@@ -265,144 +284,141 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  color: rgba(255, 255, 255, 0.92);
+  gap: 11px;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  background: #1e2340;
-  border: 1px solid rgba(86, 112, 255, 0.22);
-  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(29, 35, 72, 0.96), rgba(20, 28, 67, 0.96));
+  border: 1px solid rgba(91, 117, 255, 0.28);
+  border-radius: 8px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   font-family: inherit;
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 900;
   transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
-}
-
-.tab svg {
-  flex: 0 0 auto;
 }
 
 .tab:hover,
 .tabActive {
   color: #fff;
-  background: #5a70ff;
-  border-color: rgba(183, 201, 255, 0.86);
-  box-shadow:
-    0 0 18px rgba(90, 112, 255, 0.62),
-    inset 0 1px 0 rgba(255, 255, 255, 0.23);
+  background: linear-gradient(135deg, #6d5cff, #4b72ff);
+  border-color: rgba(195, 212, 255, 0.9);
+  box-shadow: 0 0 18px rgba(87, 104, 255, 0.66), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
 }
 
-.tableCard {
-  height: calc(100% - 60px - 16px - 98px - 12px);
-  min-height: 400px;
-  overflow: hidden;
-  background: rgba(1, 18, 80, 0.27);
-  border-radius: 10px;
-}
-
-.tableRow {
+.topThree {
   display: grid;
-  grid-template-columns: 10% 1.5fr 0.85fr 0.85fr 0.85fr;
-  align-items: center;
-  min-height: 60px;
-  padding: 0 30px;
-  font-size: 19px;
-  font-weight: 800;
+  grid-template-columns: minmax(0, 30fr) minmax(0, 34fr) minmax(0, 30fr);
+  align-items: end;
+  gap: 24px;
+  min-height: 260px;
+  padding: 40px 3.2% 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(77, 91, 255, 0.2), transparent 58%),
+    linear-gradient(180deg, rgba(4, 21, 83, 0.2), rgba(3, 24, 103, 0.34));
+  border: 1px solid rgba(51, 111, 255, 0.12);
+  border-radius: 12px;
 }
 
-.tableHead {
-  min-height: 56px;
-  color: rgba(245, 248, 255, 0.84);
-  background: linear-gradient(90deg, rgba(23, 85, 192, 0.68), rgba(16, 75, 178, 0.62));
-  border-radius: 10px;
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.columnHead {
+.honorCard {
+  position: relative;
   display: flex;
+  min-width: 0;
+  height: 210px;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  justify-self: stretch;
-  height: 34px;
-  border-radius: 6px;
-  text-align: center;
+  padding: 32px 20px 18px;
+  overflow: visible;
+  border: 1px solid;
+  border-radius: 14px 14px 4px 4px;
 }
 
-.sortedHead {
-  color: #ffd700;
-  background: rgba(90, 112, 255, 0.42);
-  box-shadow: inset 0 0 0 1px rgba(126, 155, 255, 0.38);
+.honorCardRank1 {
+  height: 222px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 221, 91, 0.38), transparent 42%),
+    linear-gradient(180deg, rgba(128, 91, 31, 0.86), rgba(30, 34, 82, 0.9));
+  border-color: rgba(255, 214, 79, 0.92);
+  box-shadow: 0 0 30px rgba(255, 193, 38, 0.34), inset 0 1px 0 rgba(255, 247, 204, 0.34);
 }
 
-.tableBody {
-  height: calc(100% - 56px);
-  padding: 8px 0 10px;
-  overflow-y: auto;
+.honorCardRank2 {
+  background:
+    radial-gradient(circle at 50% 8%, rgba(199, 220, 255, 0.26), transparent 42%),
+    linear-gradient(180deg, rgba(46, 82, 151, 0.86), rgba(19, 35, 91, 0.92));
+  border-color: rgba(155, 194, 255, 0.82);
+  box-shadow: 0 0 22px rgba(105, 151, 255, 0.22), inset 0 1px 0 rgba(229, 240, 255, 0.26);
 }
 
-.tableBody .tableRow {
-  height: 60px;
-  min-height: 60px;
-  border-radius: 9px;
-  transition: background 0.22s ease, box-shadow 0.22s ease;
+.honorCardRank3 {
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 163, 112, 0.27), transparent 42%),
+    linear-gradient(180deg, rgba(126, 62, 57, 0.86), rgba(51, 31, 76, 0.92));
+  border-color: rgba(255, 145, 98, 0.78);
+  box-shadow: 0 0 22px rgba(255, 112, 66, 0.2), inset 0 1px 0 rgba(255, 220, 197, 0.24);
 }
 
-.tableBody .tableRow:hover {
-  background: rgba(42, 112, 245, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(92, 153, 255, 0.24);
+.honorCard::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 32%, transparent 72%, rgba(255, 255, 255, 0.05));
+  content: '';
 }
 
-.emptyRow {
-  color: rgba(255, 255, 255, 0.78);
+.honorMedal {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  z-index: 3;
+  width: 68px;
+  height: 68px;
+  transform: translateX(-50%);
 }
 
-.rankCell {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.medal {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.34));
-}
-
-.medalImage {
-  width: 44px;
-  height: 44px;
+.honorMedalImage {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(255, 210, 76, 0.45));
 }
 
-.plainRank {
-  display: inline-block;
-  width: 40px;
-  color: rgba(255, 255, 255, 0.82);
-  text-align: center;
-  font-size: 18px;
-  font-weight: 900;
+.honorCardRank1 .honorMedal {
+  top: -39px;
+  width: 78px;
+  height: 78px;
 }
 
-.playerCell {
+.honorContent {
+  position: relative;
+  z-index: 1;
   display: flex;
-  align-items: center;
   min-width: 0;
-  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.avatar {
+.honorAvatar {
   position: relative;
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  width: 78px;
+  height: 78px;
   overflow: hidden;
-  border: 2px solid rgba(82, 123, 255, 0.78);
+  background: #081055;
+  border: 2px solid rgba(164, 117, 255, 0.95);
   border-radius: 50%;
-  box-shadow: 0 0 11px rgba(91, 126, 255, 0.86);
+  box-shadow: 0 0 18px rgba(123, 76, 255, 0.82);
+}
+
+.honorCardRank1 .honorAvatar {
+  width: 88px;
+  height: 88px;
+  border-color: rgba(255, 218, 79, 0.92);
+  box-shadow: 0 0 22px rgba(255, 195, 43, 0.42), 0 0 16px rgba(124, 70, 255, 0.76);
 }
 
 .avatarImage {
@@ -414,20 +430,172 @@
   background-size: cover;
 }
 
-.avatarPlaceholder {
+.honorName {
+  display: block;
+  max-width: 90%;
+  margin-top: 8px;
+  overflow: hidden;
+  color: #fff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 18px;
+  font-weight: 1000;
+}
+
+.honorCardRank1 .honorName {
+  font-size: 21px;
+  text-shadow: 0 0 12px rgba(255, 219, 89, 0.42);
+}
+
+.honorValue {
+  margin-top: 5px;
+  color: var(--gold);
+  font-size: 21px;
+  font-weight: 1000;
+  text-shadow: 0 0 10px rgba(255, 203, 50, 0.58);
+}
+
+.honorCardRank1 .honorValue {
+  font-size: 25px;
+}
+
+.honorMetric {
+  margin-top: 2px;
+  color: rgba(224, 232, 255, 0.78);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.honorEmpty {
+  position: relative;
+  z-index: 1;
+  margin-top: 28px;
+  color: rgba(225, 233, 255, 0.62);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tableCard {
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(1, 16, 72, 0.32);
+  margin-top: 0;
+  border: 1px solid rgba(62, 121, 255, 0.22);
+  border-radius: 10px;
+}
+
+.tableRow {
   display: grid;
+  grid-template-columns: 9% 1.4fr repeat(4, 0.72fr);
+  align-items: center;
+  min-height: 66px;
+  padding: 0 24px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.tableHead {
+  min-height: 50px;
+  color: rgba(245, 248, 255, 0.86);
+  background: linear-gradient(90deg, rgba(24, 83, 187, 0.82), rgba(16, 70, 166, 0.72));
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.columnHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: stretch;
+  height: 30px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.sortedHead {
+  color: #ffd700;
+  background: rgba(79, 107, 255, 0.48);
+  box-shadow: inset 0 0 0 1px rgba(126, 155, 255, 0.4);
+}
+
+.tableBody {
+  height: calc(100% - 50px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(85, 126, 255, 0.45) transparent;
+}
+
+.tableBody .tableRow {
+  border-bottom: 1px solid rgba(92, 133, 255, 0.14);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tableBody .tableRow:hover,
+.topRankRow {
+  background: rgba(37, 91, 205, 0.15);
+}
+
+.tableBody .tableRow:hover {
+  box-shadow: inset 0 0 0 1px rgba(92, 153, 255, 0.2);
+}
+
+.emptyRow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.rankCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.medal {
+  display: inline-grid;
   place-items: center;
-  color: rgba(255, 255, 255, 0.62);
-  background: linear-gradient(180deg, #646b7f, #33394d);
-  border-color: rgba(185, 194, 211, 0.55);
-  box-shadow: none;
+  width: 42px;
+  height: 42px;
+}
+
+.medalImage {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 7px rgba(255, 215, 0, 0.3));
+}
+
+.plainRank {
+  display: inline-block;
+  width: 42px;
+  color: rgba(255, 255, 255, 0.84);
+  text-align: center;
+  font-size: 21px;
+  font-weight: 1000;
+}
+
+.playerCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 11px;
+}
+
+.avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border: 2px solid rgba(113, 84, 255, 0.86);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(91, 126, 255, 0.78);
 }
 
 .playerMeta {
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: 10px;
+  gap: 8px;
 }
 
 .playerName {
@@ -441,18 +609,18 @@
 .level {
   display: inline-flex;
   align-items: center;
-  height: 21px;
-  padding: 0 6px;
+  height: 19px;
+  padding: 0 5px;
   color: #fff;
   background: #2d73ff;
-  border-radius: 6px;
-  box-shadow: 0 0 8px rgba(47, 123, 255, 0.6);
-  font-size: 12px;
+  border-radius: 5px;
+  font-size: 10px;
   font-weight: 900;
   white-space: nowrap;
 }
 
-.metricNumber {
+.metricNumber,
+.winRateNumber {
   display: block;
   justify-self: stretch;
   text-align: center;
@@ -461,127 +629,182 @@
 .goldNumber {
   color: #ffd700;
   text-shadow: 0 0 9px rgba(255, 193, 24, 0.45);
-  font-weight: 900;
+  font-weight: 1000;
 }
 
 .normalNumber {
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(241, 245, 255, 0.9);
+}
+
+.winRateNumber {
+  color: var(--pink);
+  font-weight: 1000;
+  text-shadow: 0 0 9px rgba(255, 69, 168, 0.32);
 }
 
 .myRankCard {
-  position: absolute;
-  right: 18px;
-  bottom: 14px;
-  left: 18px;
   display: grid;
-  grid-template-columns: 0.72fr 1.6fr 0.78fr 0.78fr 0.78fr 0.78fr 1.12fr;
+  grid-template-columns: 0.8fr 1.45fr repeat(4, 0.92fr) 1.28fr;
   align-items: center;
-  height: 96px;
-  padding: 10px 16px;
+  height: 64px;
+  padding: 0 16px;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(18, 73, 173, 0.45), rgba(7, 36, 117, 0.58));
-  border: 1px solid rgba(50, 117, 255, 0.34);
-  border-radius: 8px;
-  box-shadow:
-    0 0 16px rgba(21, 88, 234, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(12, 53, 139, 0.58), rgba(6, 31, 104, 0.7));
+  border: 1px solid rgba(45, 126, 255, 0.88);
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(20, 91, 244, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .myRankLabel,
-.myStat,
-.winRate,
-.nextGap {
-  display: grid;
-  align-content: center;
-  justify-items: center;
+.myStat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
-  gap: 5px;
+  gap: 7px;
 }
 
-.myRankLabel span,
-.myStat span,
-.winRate span,
-.nextGap span {
-  color: #c0d1ff;
-  font-size: 14px;
+.myRankTitle {
+  color: #c7d7ff;
+  font-size: 13px;
   font-weight: 900;
 }
 
-.myRankLabel strong {
+.myRankValue {
   color: var(--cyan);
-  font-size: 27px;
+  font-size: 23px;
   line-height: 1;
-  text-shadow: 0 0 12px rgba(0, 234, 255, 0.7);
+  font-weight: 1000;
+  text-shadow: 0 0 10px rgba(0, 234, 255, 0.66);
 }
 
 .myPlayer {
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: 12px;
-  padding-right: 12px;
+  gap: 11px;
+  padding: 0 18px 0 8px;
 }
 
 .myAvatar {
+  position: relative;
   flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
+  width: 42px;
+  height: 42px;
   overflow: hidden;
-  background: rgba(4, 14, 78, 0.72);
-  border: 2px solid rgba(143, 91, 255, 0.95);
-  border-radius: 10px;
-  box-shadow: 0 0 18px rgba(137, 74, 255, 0.82);
+  background: #081055;
+  border: 2px solid rgba(156, 91, 255, 0.96);
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(111, 72, 255, 0.76);
 }
 
-.myPlayerText {
-  display: grid;
+.myName {
   min-width: 0;
-  gap: 5px;
-}
-
-.myPlayerText strong {
   overflow: hidden;
   color: #fff;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.myPlayerText em {
-  justify-self: start;
-  padding: 2px 8px;
-  color: #fff;
-  background: linear-gradient(180deg, #338bff, #1554ff);
-  border-radius: 5px;
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 15px;
+  font-weight: 1000;
 }
 
 .myStat {
-  border-left: 1px solid rgba(85, 140, 255, 0.2);
+  height: 32px;
+  border-left: 1px solid rgba(82, 139, 255, 0.28);
 }
 
-.myStat strong,
-.nextGap strong {
+.myStat span {
+  color: #b9ccff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.myStat strong {
+  max-width: 100%;
+  overflow: hidden;
   color: #fff;
-  font-size: 19px;
-  font-weight: 900;
-}
-
-.winRate {
-  border-left: 1px solid rgba(85, 140, 255, 0.2);
-}
-
-.winRate strong {
-  color: #ff61a6;
-  font-size: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
   font-weight: 1000;
-  text-shadow: 0 0 13px rgba(255, 78, 234, 0.66);
 }
 
-.nextGap {
-  border-left: 1px solid rgba(85, 140, 255, 0.2);
+.myStatpink {
+  color: var(--pink) !important;
+  text-shadow: 0 0 10px rgba(255, 69, 168, 0.44);
+}
+
+.myStatgold {
+  color: var(--gold) !important;
+  text-shadow: 0 0 10px rgba(255, 211, 41, 0.4);
+}
+
+@media (max-height: 820px) {
+  .panel {
+    grid-template-rows: 46px minmax(230px, 30fr) minmax(176px, 60fr) 58px;
+    gap: 9px;
+    padding-top: 14px;
+  }
+
+  .tabs {
+    height: 48px;
+  }
+
+  .topThree {
+    min-height: 230px;
+    padding-top: 36px;
+  }
+
+  .honorCard {
+    height: 190px;
+  }
+
+  .honorCardRank1 {
+    height: 202px;
+  }
+
+  .honorAvatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .honorCardRank1 .honorAvatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .honorMedal {
+    width: 60px;
+    height: 60px;
+  }
+
+  .honorCardRank1 .honorMedal {
+    width: 68px;
+    height: 68px;
+  }
+
+  .honorName {
+    font-size: 15px;
+  }
+
+  .honorValue {
+    font-size: 16px;
+  }
+
+  .tableRow {
+    min-height: 58px;
+  }
+
+  .myAvatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .myRankValue {
+    font-size: 21px;
+  }
+
+  .myStat strong {
+    font-size: 16px;
+  }
 }

@@ -1,0 +1,1048 @@
+.modalRoot {
+  --violet: #7758ff;
+  --blue: #3d68ff;
+  --yellow: #ffd64d;
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(1, 3, 24, 0.72);
+  backdrop-filter: blur(7px);
+}
+
+.modal {
+  position: relative;
+  width: min(940px, calc(100vw - 28px));
+  max-width: 940px;
+  filter:
+    drop-shadow(0 0 5px rgba(132, 73, 255, 0.95))
+    drop-shadow(0 0 18px rgba(62, 55, 255, 0.62));
+}
+
+.panelShape {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.panelFill {
+  fill: url('#sign-panel-fill');
+  stroke: none;
+}
+
+.panelBorder {
+  fill: none;
+  stroke: url('#sign-panel-stroke');
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  filter: url('#sign-panel-glow');
+  stroke-dasharray: 190 750;
+  stroke-linecap: round;
+  animation: panelTrace 8s linear infinite;
+}
+
+.panelInnerBorder {
+  fill: none;
+  stroke: rgba(101, 111, 245, 0.58);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.frame {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+  padding: 13px 25px 19px;
+  color: #fff;
+  border: 0;
+  background:
+    radial-gradient(circle at 78% 1%, rgba(110, 70, 255, 0.22), transparent 28%),
+    radial-gradient(circle at 8% 60%, rgba(40, 74, 255, 0.12), transparent 30%);
+}
+
+.frame::before,
+.frame::after {
+  position: absolute;
+  z-index: 0;
+  width: 190px;
+  height: 190px;
+  content: '';
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px);
+  background-size: 28px 28px;
+  opacity: 0.2;
+}
+
+.frame::before {
+  top: 24px;
+  left: 20px;
+}
+
+.frame::after {
+  right: 24px;
+  bottom: 20px;
+}
+
+.particleField {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particleField span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d7d4ff;
+  box-shadow:
+    0 0 4px #b5a7ff,
+    0 0 9px rgba(117, 99, 255, 0.85);
+  opacity: 0;
+  animation: starDrift 5.6s ease-in-out infinite;
+}
+
+.particleField span:nth-child(1) {
+  left: 5%;
+  top: 18%;
+  animation-delay: -0.5s;
+}
+
+.particleField span:nth-child(2) {
+  left: 13%;
+  top: 74%;
+  animation-delay: -2.1s;
+}
+
+.particleField span:nth-child(3) {
+  left: 22%;
+  top: 9%;
+  animation-delay: -3.4s;
+}
+
+.particleField span:nth-child(4) {
+  left: 31%;
+  top: 51%;
+  animation-delay: -1.2s;
+}
+
+.particleField span:nth-child(5) {
+  left: 42%;
+  top: 16%;
+  animation-delay: -4.2s;
+}
+
+.particleField span:nth-child(6) {
+  left: 52%;
+  top: 84%;
+  animation-delay: -2.7s;
+}
+
+.particleField span:nth-child(7) {
+  left: 61%;
+  top: 39%;
+  animation-delay: -0.9s;
+}
+
+.particleField span:nth-child(8) {
+  left: 70%;
+  top: 12%;
+  animation-delay: -3.8s;
+}
+
+.particleField span:nth-child(9) {
+  left: 78%;
+  top: 70%;
+  animation-delay: -1.7s;
+}
+
+.particleField span:nth-child(10) {
+  left: 87%;
+  top: 31%;
+  animation-delay: -4.8s;
+}
+
+.particleField span:nth-child(11) {
+  left: 93%;
+  top: 82%;
+  animation-delay: -2.9s;
+}
+
+.particleField span:nth-child(12) {
+  left: 47%;
+  top: 63%;
+  animation-delay: -5.2s;
+}
+
+.topGlow {
+  position: absolute;
+  z-index: 6;
+  top: 2px;
+  left: 9%;
+  width: 17%;
+  height: 2px;
+  background: linear-gradient(90deg, #5079ff, #b261ff 76%, transparent);
+  box-shadow:
+    0 0 7px #654eff,
+    0 0 15px rgba(112, 69, 255, 0.72);
+  animation: topTrace 4.8s ease-in-out infinite;
+}
+
+.header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 91px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 43px 0 8px;
+  border-bottom: 1px solid rgba(119, 99, 255, 0.28);
+}
+
+.titleGroup {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.titleBadge {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: #fff;
+  border: 1px solid rgba(176, 156, 255, 0.56);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(117, 89, 255, 0.78), rgba(51, 70, 204, 0.74));
+  box-shadow: 0 0 20px rgba(118, 87, 255, 0.54);
+  animation: badgeGlow 3.4s ease-in-out infinite;
+}
+
+.titleBadge svg {
+  width: 22px;
+  height: 22px;
+}
+
+.titleGroup h2,
+.titleGroup p {
+  margin: 0;
+}
+
+.titleGroup h2 {
+  font-family: 'GameTitle', Arial, sans-serif;
+  font-size: clamp(25px, 2vw, 34px);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 14px rgba(155, 130, 255, 0.8);
+}
+
+.titleGroup p {
+  margin-top: 4px;
+  color: rgba(224, 226, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.headerArt {
+  position: absolute;
+  top: 0;
+  right: 58px;
+  width: 48%;
+  height: 96px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orbit {
+  position: absolute;
+  top: 17px;
+  left: 1%;
+  width: 84%;
+  height: 58px;
+  border: 1px solid rgba(127, 121, 255, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(61, 94, 255, 0.18);
+  transform: rotate(-7deg);
+  animation: orbitBreathe 7s ease-in-out infinite;
+}
+
+.orbit::before,
+.orbit::after {
+  position: absolute;
+  content: '';
+  border-radius: 50%;
+  background: linear-gradient(145deg, #6e78ff, #b063ff);
+  box-shadow: 0 0 14px rgba(115, 99, 255, 0.8);
+}
+
+.orbit::before {
+  top: 25px;
+  left: -4px;
+  width: 13px;
+  height: 13px;
+}
+
+.orbit::after {
+  top: 0;
+  right: 26px;
+  width: 38px;
+  height: 38px;
+}
+
+.giftImage {
+  position: absolute;
+  top: -24px;
+  right: 25%;
+  width: 130px;
+  height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(81, 116, 255, 0.68));
+  animation: giftFloat 4.6s ease-in-out infinite;
+}
+
+.crystalImage {
+  position: absolute;
+  top: 13px;
+  right: 3%;
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 14px rgba(169, 73, 255, 0.75));
+  animation: crystalFloat 5.2s ease-in-out -1.3s infinite;
+}
+
+.closeButton {
+  position: absolute;
+  z-index: 5;
+  top: 17px;
+  right: 17px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  place-items: center;
+  color: rgba(241, 242, 255, 0.78);
+  border: 1px solid rgba(149, 151, 255, 0.4);
+  border-radius: 9px;
+  background: rgba(13, 20, 80, 0.72);
+  transition: 160ms ease;
+}
+
+.closeButton:hover {
+  color: #fff;
+  border-color: rgba(203, 193, 255, 0.78);
+  background: rgba(68, 56, 170, 0.72);
+  box-shadow: 0 0 16px rgba(111, 99, 255, 0.48);
+}
+
+.closeButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dailyRewards {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 0 17px;
+}
+
+.rewardCard {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 235px;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 10px 7px 9px;
+  border: 1px solid rgba(99, 112, 239, 0.72);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(59, 72, 179, 0.52), rgba(20, 29, 109, 0.78)),
+    rgba(16, 24, 91, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 0 0 1px rgba(22, 31, 111, 0.86),
+    inset 0 0 15px rgba(56, 73, 210, 0.16),
+    0 10px 22px rgba(2, 5, 37, 0.26);
+  animation: rewardCardFloat 5.8s ease-in-out infinite;
+}
+
+.rewardCard:nth-child(2) {
+  animation-delay: -0.7s;
+}
+
+.rewardCard:nth-child(3) {
+  animation-delay: -1.4s;
+}
+
+.rewardCard:nth-child(4) {
+  animation-delay: -2.1s;
+}
+
+.rewardCard:nth-child(5) {
+  animation-delay: -2.8s;
+}
+
+.rewardCard:nth-child(6) {
+  animation-delay: -3.5s;
+}
+
+.rewardCard:nth-child(7) {
+  animation-delay: -4.2s;
+}
+
+.rewardCard::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 32%);
+}
+
+.rewardDay {
+  position: relative;
+  z-index: 1;
+  color: rgba(247, 248, 255, 0.86);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.rewardVisual {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 94px;
+  margin-top: 3px;
+  place-items: center;
+}
+
+.rewardVisual::after {
+  position: absolute;
+  width: 82px;
+  height: 30px;
+  content: '';
+  border-radius: 50%;
+  background: rgba(63, 79, 255, 0.28);
+  filter: blur(13px);
+}
+
+.rewardImage {
+  position: relative;
+  z-index: 1;
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(1, 4, 30, 0.42));
+  animation: rewardIconHover 3.8s ease-in-out infinite;
+}
+
+.rewardCard:nth-child(even) .rewardImage {
+  animation-delay: -1.6s;
+}
+
+.rewardCard:nth-child(1) .rewardImage,
+.rewardCard:nth-child(3) .rewardImage,
+.rewardCard:nth-child(6) .rewardImage {
+  width: 88px;
+  height: 78px;
+}
+
+.specialCard .rewardImage {
+  width: 92px;
+  height: 92px;
+}
+
+.rewardName {
+  position: relative;
+  z-index: 1;
+  color: #f1f3ff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rewardAmount {
+  position: relative;
+  z-index: 1;
+  margin-top: 4px;
+  color: var(--yellow);
+  font-size: 11px;
+}
+
+.rewardStatus {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: auto;
+  color: rgba(229, 232, 255, 0.7);
+  border: 1px solid rgba(119, 125, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(31, 42, 131, 0.5);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rewardStatus svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 3;
+}
+
+.signedCard {
+  border-color: rgba(255, 211, 76, 0.86);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 196, 53, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(105, 71, 88, 0.62), rgba(69, 50, 79, 0.78));
+  box-shadow:
+    0 0 0 1px rgba(118, 77, 20, 0.84),
+    0 0 19px rgba(255, 192, 47, 0.36),
+    inset 0 0 0 1px rgba(255, 230, 126, 0.22),
+    inset 0 0 16px rgba(255, 200, 58, 0.14);
+}
+
+.signedCard .rewardDay,
+.signedCard .rewardStatus {
+  color: #ffe679;
+}
+
+.signedCard .rewardStatus {
+  border-color: rgba(255, 207, 62, 0.24);
+  background: rgba(146, 102, 35, 0.32);
+}
+
+.currentCard {
+  border-color: rgba(226, 98, 255, 0.96);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(201, 67, 255, 0.34), transparent 50%),
+    linear-gradient(180deg, rgba(101, 45, 183, 0.78), rgba(47, 30, 126, 0.86));
+  box-shadow:
+    0 0 0 1px rgba(101, 37, 165, 0.9),
+    0 0 23px rgba(205, 73, 255, 0.52),
+    inset 0 0 0 1px rgba(245, 176, 255, 0.22),
+    inset 0 0 20px rgba(206, 104, 255, 0.18);
+  animation-name: rewardCardFloat, currentRewardPulse;
+  animation-duration: 5.8s, 2.8s;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+}
+
+.currentCard .rewardStatus {
+  color: #fff;
+  border-color: rgba(226, 147, 255, 0.3);
+  background: rgba(112, 55, 189, 0.58);
+}
+
+.monthlyPanel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 165px 1fr;
+  min-height: 132px;
+  overflow: hidden;
+  padding: 12px 17px;
+  border: 1px solid rgba(71, 86, 211, 0.72);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(24, 37, 128, 0.74), rgba(12, 20, 82, 0.82)),
+    rgba(11, 18, 74, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(152, 163, 255, 0.08),
+    inset 0 0 0 1px rgba(13, 23, 92, 0.9),
+    inset 0 0 22px rgba(40, 55, 175, 0.14),
+    0 0 12px rgba(38, 48, 177, 0.12);
+}
+
+.monthlySummary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid rgba(116, 124, 255, 0.14);
+}
+
+.monthlyTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(237, 239, 255, 0.82);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.monthlyTitle svg {
+  width: 14px;
+  height: 14px;
+  color: #9aa5ff;
+}
+
+.dayCount {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.dayCount strong {
+  color: var(--yellow);
+  font-size: 36px;
+  font-style: italic;
+  line-height: 1;
+  text-shadow: 0 0 15px rgba(255, 203, 55, 0.35);
+}
+
+.dayCount span {
+  padding-bottom: 4px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.monthlySummary p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 0 0;
+  color: rgba(217, 221, 255, 0.62);
+  font-size: 9px;
+}
+
+.ticket {
+  display: grid;
+  width: 20px;
+  height: 15px;
+  place-items: center;
+  color: #fff;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #8f5eff, #6d77ff);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.progressArea {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3px 12px 0 24px;
+}
+
+.milestones,
+.milestoneDays {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.milestoneReward {
+  position: relative;
+  justify-self: center;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(109, 116, 238, 0.62);
+  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(50, 59, 154, 0.84), rgba(24, 30, 108, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 0 0 1px rgba(20, 27, 105, 0.82),
+    0 0 8px rgba(76, 78, 221, 0.18);
+  animation: milestoneHover 4.8s ease-in-out infinite;
+}
+
+.milestoneReward:nth-child(2) {
+  animation-delay: -0.8s;
+}
+
+.milestoneReward:nth-child(3) {
+  animation-delay: -1.6s;
+}
+
+.milestoneReward:nth-child(4) {
+  animation-delay: -2.4s;
+}
+
+.milestoneReward:nth-child(5) {
+  animation-delay: -3.2s;
+}
+
+.milestoneReward img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.milestoneReward span {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  text-shadow: 0 1px 3px #02052b;
+}
+
+.activeMilestone {
+  border-color: rgba(255, 208, 61, 0.75);
+  box-shadow: 0 0 13px rgba(255, 198, 44, 0.28);
+}
+
+.progressTrack {
+  position: relative;
+  height: 8px;
+  margin: 11px 9.5% 0;
+  border-radius: 999px;
+  background: rgba(6, 10, 57, 0.9);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.progressFill {
+  position: absolute;
+  inset: 1px auto 1px 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffcf43, #ffe879);
+}
+
+.trackNode {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border: 1px solid #8c91ff;
+  background: #29327e;
+  box-shadow: 0 0 8px rgba(102, 112, 255, 0.65);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.activeNode {
+  border-color: #ffef9c;
+  background: #ffc83c;
+  box-shadow: 0 0 12px rgba(255, 197, 42, 0.9);
+  animation: activeNodePulse 1.8s ease-in-out infinite;
+}
+
+.milestoneDays {
+  margin-top: 7px;
+  color: rgba(224, 228, 255, 0.8);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.activeDay {
+  color: var(--yellow);
+}
+
+.footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 39px;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  color: rgba(204, 210, 255, 0.55);
+  font-size: 10px;
+}
+
+.signButton {
+  min-width: 112px;
+  height: 31px;
+  cursor: default;
+  color: #17153c;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(100deg, #ffd04a, #ffeb72);
+  box-shadow: 0 0 16px rgba(255, 196, 42, 0.26);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.signButton:hover {
+  color: #17153c !important;
+  background: linear-gradient(100deg, #ffdb68, #fff18b) !important;
+}
+
+@keyframes panelTrace {
+  to {
+    stroke-dashoffset: -940;
+  }
+}
+
+@keyframes topTrace {
+  0%,
+  100% {
+    opacity: 0.48;
+    transform: translateX(-3%);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateX(13%);
+  }
+}
+
+@keyframes starDrift {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 7px, 0) scale(0.6);
+  }
+
+  35% {
+    opacity: 0.9;
+  }
+
+  65% {
+    opacity: 0.45;
+  }
+
+  80% {
+    opacity: 0;
+    transform: translate3d(7px, -14px, 0) scale(1.35);
+  }
+}
+
+@keyframes giftFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+
+  50% {
+    transform: translateY(-6px) rotate(1.5deg);
+  }
+}
+
+@keyframes crystalFloat {
+  0%,
+  100% {
+    transform: translateY(1px) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(4deg);
+  }
+}
+
+@keyframes orbitBreathe {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: rotate(-7deg) scale(0.98);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: rotate(-4deg) scale(1.02);
+  }
+}
+
+@keyframes badgeGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 13px rgba(118, 87, 255, 0.4);
+  }
+
+  50% {
+    box-shadow:
+      0 0 19px rgba(118, 87, 255, 0.8),
+      inset 0 0 8px rgba(193, 182, 255, 0.2);
+  }
+}
+
+@keyframes rewardCardFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes rewardIconHover {
+  0%,
+  100% {
+    transform: translateY(1px);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes currentRewardPulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.13);
+  }
+}
+
+@keyframes milestoneHover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes activeNodePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 7px rgba(255, 197, 42, 0.72);
+  }
+
+  50% {
+    box-shadow:
+      0 0 14px rgba(255, 197, 42, 1),
+      0 0 23px rgba(255, 167, 41, 0.48);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal::before,
+  .panelBorder,
+  .topGlow,
+  .titleBadge,
+  .orbit,
+  .giftImage,
+  .crystalImage,
+  .rewardCard,
+  .rewardImage,
+  .milestoneReward,
+  .activeNode,
+  .particleField span {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .modal {
+    width: min(940px, calc(100vw - 20px));
+  }
+
+  .frame {
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+    padding: 13px 18px 18px;
+  }
+
+  .header {
+    height: 95px;
+    padding-left: 14px;
+  }
+
+  .headerArt {
+    width: 45%;
+    height: 95px;
+  }
+
+  .giftImage {
+    top: -17px;
+    width: 118px;
+    height: 118px;
+  }
+
+  .crystalImage {
+    width: 62px;
+    height: 62px;
+  }
+
+  .dailyRewards {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    overflow-x: auto;
+  }
+
+  .rewardCard {
+    min-height: 246px;
+  }
+
+  .monthlyPanel {
+    grid-template-columns: 155px minmax(560px, 1fr);
+    overflow-x: auto;
+  }
+
+  .progressArea {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .modalRoot {
+    padding: 8px;
+  }
+
+  .modal {
+    width: calc(100vw - 16px);
+  }
+
+  .frame {
+    border-radius: 18px;
+  }
+
+  .headerArt {
+    display: none;
+  }
+
+  .header {
+    height: 88px;
+    padding-right: 42px;
+  }
+
+  .titleBadge {
+    width: 39px;
+    height: 39px;
+  }
+
+  .titleGroup h2 {
+    font-size: 26px;
+  }
+
+  .titleGroup p {
+    font-size: 11px;
+  }
+
+  .dailyRewards {
+    grid-template-columns: repeat(7, 128px);
+  }
+
+  .monthlyPanel {
+    grid-template-columns: 140px 560px;
+    padding-inline: 14px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 8px;
+    padding: 11px 0 5px;
+    text-align: center;
+  }
+}
